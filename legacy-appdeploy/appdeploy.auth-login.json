@@ -1,0 +1,13 @@
+{
+  "headline": "REBORN Admin Sign In",
+  "subtitle": "Sign in to manage the REBORN website.",
+  "style": {
+    "mode": "light",
+    "accentColor": "#f15a13",
+    "backgroundColor": "#fff8f2",
+    "panelColor": "#ffffff",
+    "textColor": "#28150b",
+    "fontFamily": "Inter, system-ui, sans-serif",
+    "borderRadius": 18
+  }
+}

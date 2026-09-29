@@ -1,0 +1,9 @@
+REBORN Collections source snapshot
+AppDeploy app: reborn-fashion-hn13d4
+Snapshot version: 1790559714186
+Version name at export: v48
+Export date: 2026-09-28
+
+This archive contains the application source tree and static assets.
+It does NOT contain the live AppDeploy database records, authentication accounts,
+or uploaded product/hero images stored in AppDeploy Storage.

@@ -1,0 +1,84 @@
+[
+  {
+    "name": "Configure Meta Pixel and fire commerce funnel events",
+    "sanity": true,
+    "viewport": "desktop",
+    "covers": [
+      "Meta Pixel admin setting",
+      "PageView",
+      "ViewContent",
+      "AddToCart",
+      "InitiateCheckout",
+      "Contact"
+    ],
+    "description": "Verifies REBORN can be connected to a Meta Pixel without code changes and emits standard events for the ad funnel.",
+    "steps": [
+      "Sign in at #admin, enter a numeric Meta Pixel ID and save settings",
+      "Open a collection and view a product",
+      "Add the product to cart, start WhatsApp checkout and use Check availability"
+    ],
+    "expected": "The Meta Pixel initializes and queues PageView, ViewContent, AddToCart, InitiateCheckout and Contact events with product/category/value data where applicable."
+  },
+  {
+    "name": "Meta tracking remains disabled when Pixel ID is blank",
+    "viewport": "mobile",
+    "covers": [
+      "optional Meta Pixel",
+      "tracking disable state"
+    ],
+    "description": "Verifies the storefront still works normally before a Meta Pixel ID is supplied.",
+    "steps": [
+      "Leave Meta Pixel ID blank in admin",
+      "Browse collections, view products and add to cart"
+    ],
+    "expected": "Shopping features work normally and no Meta Pixel script is initialized by REBORN."
+  },
+  {
+    "name": "Combo Sales ad landing remains functional",
+    "viewport": "mobile",
+    "covers": [
+      "combo sales ad landing URL",
+      "combo sale product filtering",
+      "editable promo header"
+    ],
+    "description": "Verifies the dedicated campaign page remains usable with ad tracking enabled.",
+    "steps": [
+      "Open /promo/combo-sales/",
+      "Review the editable campaign header",
+      "Open a Combo Sale product"
+    ],
+    "expected": "The Combo Sales page shows its configured heading and only Combo Sale products."
+  },
+  {
+    "name": "Collection ad landing remains functional",
+    "viewport": "desktop",
+    "covers": [
+      "collection landing URL",
+      "collection filtering",
+      "Meta PageView and ViewContent"
+    ],
+    "description": "Verifies collection campaign links still open directly to the relevant products.",
+    "steps": [
+      "Open /women/",
+      "Review the Women collection",
+      "Open a product"
+    ],
+    "expected": "The Women landing page opens correctly and product browsing remains functional."
+  },
+  {
+    "name": "WhatsApp checkout still opens with payment instructions",
+    "viewport": "mobile",
+    "covers": [
+      "WhatsApp checkout",
+      "InitiateCheckout tracking",
+      "Moniepoint transfer instructions"
+    ],
+    "description": "Verifies tracking does not interfere with the existing WhatsApp purchase flow.",
+    "steps": [
+      "Add a product to cart",
+      "Open the cart",
+      "Choose Checkout & Pay on WhatsApp"
+    ],
+    "expected": "The InitiateCheckout event is fired and WhatsApp opens with the order summary and transfer instructions."
+  }
+]
