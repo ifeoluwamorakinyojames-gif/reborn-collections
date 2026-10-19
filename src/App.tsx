@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getSiteData } from './sanity';
+import { collectionSlug, effectivePrice, phoneNumber } from './storefront';
 import AdminPanel from './AdminPanel';
 import {
+  ArrowRight,
+  CheckCircle2,
   Filter,
+  Headphones,
   Menu,
   MessageCircle,
   Minus,
@@ -11,6 +15,7 @@ import {
   RefreshCw,
   ShoppingBag,
   ShoppingCart,
+  Sparkles,
   X,
 } from 'lucide-react';
 
@@ -86,9 +91,6 @@ const blank: Draft = {
 const cats = ['All', 'Women', 'Men', 'Unisex', 'Kids', 'Wigs', 'Shoes', 'Perfumes', 'Accessories'];
 const menSizes = ['S', 'M', 'L', 'XL', '2XL', '3XL'];
 const money = (n: number) => '₦' + Number(n || 0).toLocaleString();
-const phoneNumber = (v: string) => v.replace(/\D/g, '').replace(/^0/, '234');
-const effectivePrice = (p: Product) => (p.salePrice && p.salePrice < p.price ? p.salePrice : p.price);
-const collectionSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
 
 function metaTrack(event: string, data?: Record<string, unknown>) {
   const fbq = (window as any).fbq;
@@ -147,6 +149,8 @@ function App() {
   const [selectedSize, setSelectedSize] = useState('');
   const [menu, setMenu] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const [menTab, setMenTab] = useState(initialCollection.subcategory || 'All Men');
   const [menBrand, setMenBrand] = useState('All');
   const [menSize, setMenSize] = useState('All');
@@ -216,7 +220,9 @@ function App() {
       const data = await getSiteData();
       setSettings({ ...defaults, ...data.settings });
       setProducts(data.products || []);
+      setCatalogError(false);
     } catch (e) {
+      setCatalogError(true);
       console.error('Could not load Sanity content', e);
     } finally {
       setLoading(false);
@@ -225,7 +231,7 @@ function App() {
 
   useEffect(() => {
     load();
-    const timer = setInterval(load, 15000);
+    const timer = setInterval(load, 60000);
     return () => clearInterval(timer);
   }, []);
 
@@ -242,12 +248,25 @@ function App() {
     );
   }, [products, category, menTab, menBrand, menSize, comboSaleOnly]);
 
+  const collectionHighlights = useMemo(
+    () => cats.slice(1).map((name) => {
+      const matches = products.filter((product) => product.category === name);
+      return { name, count: matches.length, image: matches.find((product) => product.image)?.image || '' };
+    }).filter((item) => item.count > 0),
+    [products],
+  );
+  const featuredProducts = useMemo(() => {
+    const promoted = products.filter((product) => product.inStock && ['Featured', 'Best Seller'].includes(product.badge || ''));
+    return (promoted.length ? promoted : products.filter((product) => product.inStock)).slice(0, 4);
+  }, [products]);
+
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const cartTotal = cart.reduce((sum, item) => sum + effectivePrice(item.product) * item.qty, 0);
 
   function openProduct(p: Product) {
     metaTrack('ViewContent', { content_ids: [p.id], content_name: p.name, content_category: p.category, content_type: 'product', value: effectivePrice(p), currency: 'NGN' });
     setSelected(p);
+    setGalleryIndex(0);
     setSelectedSize(p.sizes?.[0] || '');
   }
 
@@ -319,23 +338,24 @@ function App() {
 
   return (
     <div className='site'>
-      <header>
-        <nav>
+      <header id='top'>
+        <div className='announcement'><span>Style for every day · Wholesale & retail</span><a href='#shop'>Shop the catalogue →</a></div>
+        <nav aria-label='Main navigation'>
           <a href='#top' className='brand'>
             {settings.logoUrl ? <img src={settings.logoUrl} alt='REBORN logo' /> : settings.brand}
           </a>
-          <div className={'nav ' + (menu ? 'open' : '')}>
+          <div id='collection-navigation' className={'nav ' + (menu ? 'open' : '')}>
             {cats.slice(1).map((c) => (
-              <button key={c} onClick={() => { location.hash = '#collection/' + collectionSlug(c); setCategory(c); setMenu(false); }}>
+              <button key={c} aria-current={category === c ? 'page' : undefined} onClick={() => { location.hash = '#collection/' + collectionSlug(c); setCategory(c); setMenu(false); }}>
                 {c}
               </button>
             ))}
           </div>
           <div className='navActions'>
-            <button className='cartButton' onClick={() => setCartOpen(true)}>
+            <button className='cartButton' aria-label={'Open cart with ' + cartCount + ' items'} onClick={() => setCartOpen(true)}>
               <ShoppingCart size={19} /> Cart {cartCount > 0 && <span>{cartCount}</span>}
             </button>
-            <button className='menu' aria-label={menu ? 'Close collections menu' : 'Open collections menu'} aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? <X /> : <Menu />}</button>
+            <button className='menu' aria-controls='collection-navigation' aria-label={menu ? 'Close collections menu' : 'Open collections menu'} aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? <X /> : <Menu />}</button>
           </div>
         </nav>
         <section className='hero'>
@@ -351,7 +371,7 @@ function App() {
           {settings.heroImageUrl ? (
             <div className='heroVisual'>
               <div className='heroArch'></div>
-              <img src={settings.heroImageUrl} alt='REBORN fashion model' />
+              <img src={settings.heroImageUrl} alt='REBORN featured collection' fetchPriority='high' decoding='async' />
             </div>
           ) : (
             <div className='heroBox'><ShoppingBag /><b>REBORN Collections</b><span>{settings.address}</span></div>
