@@ -380,13 +380,33 @@ function App() {
       </header>
 
       <main id='shop'>
+        {category === 'All' && !comboSaleOnly && <>
+          <section className='storeBenefits' aria-label='Shopping benefits'>
+            <div><Sparkles size={23} /><div><b>Style across collections</b><span>Fashion, footwear, wigs and accessories in one catalogue.</span></div></div>
+            <div><CheckCircle2 size={23} /><div><b>Retail & wholesale</b><span>Explore listed products and available pricing.</span></div></div>
+            <div><Headphones size={23} /><div><b>WhatsApp ordering</b><span>Confirm your order, availability and delivery with our team.</span></div></div>
+          </section>
+          {collectionHighlights.length > 0 && <section className='collectionEdit' aria-label='Shop by collection'>
+            <div className='editorialHeading'><div><small>Find your next look</small><h2>Shop by collection</h2><p>Discover what is currently available.</p></div><a href='#product-catalogue'>View all products <ArrowRight size={16}/></a></div>
+            <div className='collectionTiles'>{collectionHighlights.map(item =>
+              <a key={item.name} className='collectionTile' href={'#collection/' + collectionSlug(item.name)} onClick={() => setCategory(item.name)}>
+                {item.image ? <CatalogueImage src={item.image} alt={item.name + ' collection'} /> : <div className='collectionPlaceholder'>{item.name[0]}</div>}
+                <span className='collectionText'><strong>{item.name}</strong><small>{item.count} products · Explore →</small></span>
+              </a>)}</div>
+          </section>}
+          {featuredProducts.length > 0 && <section className='featuredEdit' aria-label='Featured products'>
+            <div className='editorialHeading'><div><small>Selected for you</small><h2>The REBORN edit</h2><p>A selection from our current catalogue.</p></div><a href='#product-catalogue'>Explore everything <ArrowRight size={16}/></a></div>
+            <ProductGrid list={featuredProducts} loading={false} open={openProduct} add={addToCart} />
+          </section>}
+        </>}
+
         {comboSales.length > 0 && !comboSaleOnly && (
           <section className='newArrivalShowcase' aria-label='Combo sales promotion'>
             <div className='newArrivalTop'>
               <div><small>{settings.comboSaleEyebrow}</small><h2>{settings.comboSaleTitle}</h2><p>{settings.comboSaleText}</p></div>
               <div className='newArrivalActions'><button onClick={() => { location.hash = '#promo/combo-sales'; setComboSaleOnly(true); }}>Shop Combo Sales</button></div>
             </div>
-            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><img src={p.image} alt={p.name} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3>{p.name}</h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
+            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><CatalogueImage src={p.image} alt={p.name} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3>{p.name}</h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button disabled={!p.inStock} onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> {p.inStock ? 'Add' : 'Sold out'}</button></div></div></article>)}</div>
           </section>
         )}
         {newArrivals.length > 0 && !comboSaleOnly && (
@@ -402,7 +422,7 @@ function App() {
               const item = newArrivals[newArrivalIndex % newArrivals.length];
               return (
                 <div className='newArrivalSlide'>
-                  <button className='newArrivalImage' onClick={() => openProduct(item)}><img src={item.image} alt={item.name} /><span>NEW ARRIVAL</span></button>
+                  <button className='newArrivalImage' onClick={() => openProduct(item)}><CatalogueImage src={item.image} alt={item.name} eager /><span>NEW ARRIVAL</span></button>
                   <div className='newArrivalCopy'>
                     <small>{item.brand || 'REBORN'} · {item.category}</small>
                     <h3>{item.name}</h3>
@@ -419,14 +439,15 @@ function App() {
             {newArrivals.length > 1 && <div className='newArrivalDots'>{newArrivals.map((item, i) => <button key={item.id} aria-label={'Show new arrival ' + (i + 1)} className={i === newArrivalIndex ? 'active' : ''} onClick={() => setNewArrivalIndex(i)} />)}</div>}
           </section>
         )}
-        <div className='shopHead'>
+        <div id='product-catalogue' className='shopHead'>
           <div>
-            <small>LIVE FROM ADMIN</small>
+            <small>OUR CURRENT CATALOGUE</small>
             <h2>{comboSaleOnly ? settings.comboSaleTitle : category === 'All' ? 'Current products' : collectionCopy[category]?.title || category + ' Collection'}</h2>
-            <p>{comboSaleOnly ? settings.comboSaleText : category === 'All' ? 'Everything shown here is loaded from the backend database.' : collectionCopy[category]?.text}</p>
+            <p>{comboSaleOnly ? settings.comboSaleText : category === 'All' ? 'Explore our fashion catalogue and send your selection to us on WhatsApp.' : collectionCopy[category]?.text}</p>
           </div>
           <button onClick={load}><RefreshCw size={17} /> Refresh</button>
         </div>
+        {catalogError && <p className='catalogError' role='alert'>Could not refresh Sanity products. Try Refresh to reconnect; previously loaded products remain visible.</p>}
         <div className='chips'>
           {comboSaleOnly && <button className='active'>Combo Sales</button>}
           {cats.map((c) => (
@@ -474,6 +495,14 @@ function App() {
           </>
         )}
         {category !== 'Men' && <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} />}
+        {category === 'All' && !comboSaleOnly && <section className='orderSteps'>
+          <div className='editorialHeading'><div><small>How to shop</small><h2>From discovery to your door</h2><p>Shop your way and confirm the details with REBORN.</p></div></div>
+          <div className='orderStepsGrid'>
+            <article><b>01</b><h3>Discover</h3><p>Explore our product images, sizes and prices.</p></article>
+            <article><b>02</b><h3>Select</h3><p>Build your cart or choose one item directly.</p></article>
+            <article><b>03</b><h3>Confirm</h3><p>Send your order through WhatsApp to confirm availability and delivery details.</p></article>
+          </div>
+        </section>}
       </main>
 
       <footer><b>{settings.brand}</b><span>{settings.tagline}</span><a onClick={() => metaTrack('Contact', { content_name: 'Footer WhatsApp' })} href={'https://wa.me/' + phoneNumber(settings.whatsapp)}>WhatsApp</a></footer>
@@ -484,12 +513,13 @@ function App() {
           <div className='productModal' onClick={(e) => e.stopPropagation()}>
             <button className='close' onClick={() => setSelected(null)}><X /></button>
             <div className='gallery'>
-              <img src={selected.image} alt={selected.name} />
+              <CatalogueImage src={selected.images?.[galleryIndex] || selected.image} alt={selected.name} eager />
               {selected.images && selected.images.length > 1 && (
-                <div>{selected.images.map((img, n) => <img key={img + n} src={img} alt={selected.name + ' ' + (n + 1)} />)}</div>
+                <div className='galleryThumbButtons'>{selected.images.map((img, n) => <button key={img + n} className={n === galleryIndex ? 'active' : ''} aria-label={'Show image ' + (n + 1)} aria-pressed={n === galleryIndex} onClick={() => setGalleryIndex(n)}><CatalogueImage src={img} alt={selected.name + ' view ' + (n + 1)} /></button>)}</div>
               )}
             </div>
             <div className='detail'>
+              {!selected.inStock && <p className='catalogError'>This product is marked out of stock. Ask us about availability on WhatsApp.</p>}
               <small>{selected.brand || 'REBORN'} · {selected.category}</small>
               <h2>{selected.name}</h2>
               <h3>{money(effectivePrice(selected))}</h3>
@@ -502,8 +532,8 @@ function App() {
                 </label>
               )}
               <div className='productActions'>
-                <button className='addCart' onClick={() => addToCart(selected, selectedSize || undefined)}><ShoppingCart size={18} /> Add to cart</button>
-                <button className='whatsappButton' onClick={() => singleWhatsAppCheckout(selected, selectedSize || undefined)}><MessageCircle size={18} /> Buy on WhatsApp</button>
+                <button className='addCart' disabled={!selected.inStock} onClick={() => addToCart(selected, selectedSize || undefined)}><ShoppingCart size={18} /> Add to cart</button>
+                <button className='whatsappButton' disabled={!selected.inStock} onClick={() => singleWhatsAppCheckout(selected, selectedSize || undefined)}><MessageCircle size={18} /> Buy on WhatsApp</button>
                 <a onClick={() => metaTrack('Contact', { content_ids: [selected.id], content_name: selected.name, content_category: selected.category })} href={'https://wa.me/' + phoneNumber(settings.whatsapp) + '?text=' + encodeURIComponent('Hello REBORN, is ' + selected.name + (selectedSize ? ' in size ' + selectedSize : '') + ' available?')}>
                   <MessageCircle size={18} /> Check availability
                 </a>
@@ -524,7 +554,7 @@ function App() {
                 <div className='cartLines'>
                   {cart.map((item, index) => (
                     <div className='cartLine' key={item.product.id + (item.size || '')}>
-                      <img src={item.product.image} alt={item.product.name} />
+                      <CatalogueImage src={item.product.image} alt={item.product.name} />
                       <div><b>{item.product.name}</b>{item.size && <small>Size: {item.size}</small>}<span>{money(effectivePrice(item.product))}</span></div>
                       <div className='qty'>
                         <button onClick={() => updateQty(index, item.qty - 1)}><Minus size={14} /></button>
@@ -548,6 +578,13 @@ function App() {
   );
 }
 
+function CatalogueImage({ src, alt, eager = false }: { src: string; alt: string; eager?: boolean }) {
+  return <img src={src || '/reborn-icon.svg'} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding='async' onError={event => {
+    const img = event.currentTarget;
+    if (!img.src.endsWith('/reborn-icon.svg')) img.src = '/reborn-icon.svg';
+  }} />;
+}
+
 function ProductGrid({
   list,
   loading,
@@ -569,11 +606,11 @@ function ProductGrid({
           <div className='info'>
             <small>{p.brand || 'REBORN'} · {p.category}{p.subcategory ? ' · ' + p.subcategory : ''}</small>
             <h3>{p.name}</h3>
-            <div><b>{money(effectivePrice(p))}</b><em>Wholesale {money(p.wholesalePrice)}</em></div>
+            <div><b>{p.price > 0 ? money(effectivePrice(p)) : 'Ask for price'}</b>{p.wholesalePrice > 0 && <em>Wholesale {money(p.wholesalePrice)}</em>}</div>
             <div className='sizeLine'>{(p.sizes || []).slice(0, 6).map((s) => <span key={s}>{s}</span>)}</div>
             <div className='cardActions'>
               <button onClick={() => open(p)}>View</button>
-              <button onClick={() => add(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button>
+              <button disabled={!p.inStock} onClick={() => add(p, p.sizes?.[0])}><ShoppingCart size={15} /> {p.inStock ? 'Add' : 'Sold out'}</button>
             </div>
           </div>
         </article>
