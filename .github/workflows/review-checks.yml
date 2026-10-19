@@ -28,3 +28,5 @@ jobs:
         run: npm test
       - name: Production build (no deploy)
         run: npm run build
+      - name: Compile Cloudflare product preview Functions (no deploy)
+        run: npm run build:functions
