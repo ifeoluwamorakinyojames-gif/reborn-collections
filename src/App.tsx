@@ -1,6 +1,7 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { getProductImages, getSiteData } from './sanity';
 import { imageSrcSet, imageUrl } from './image';
+import { productIdFromPath, productPath } from './product-links';
 import { collectionSlug, effectivePrice, phoneNumber } from './storefront';
 
 import {
@@ -8,6 +9,7 @@ import {
   CheckCircle2,
   Filter,
   Headphones,
+  Link2,
   Menu,
   MessageCircle,
   Minus,
@@ -135,6 +137,9 @@ function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [category, setCategory] = useState(initialCollection.category);
   const [selected, setSelected] = useState<Product | null>(null);
+  const [productRouteId, setProductRouteId] = useState<string | null>(() => productIdFromPath(location.pathname));
+  const openedRouteRef = useRef<string | null>(null);
+  const [shareMessage, setShareMessage] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
   const [menu, setMenu] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -171,7 +176,25 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const syncProductRoute = () => {
+      const nextId = productIdFromPath(location.pathname);
+      openedRouteRef.current = null;
+      setProductRouteId(nextId);
+      if (!nextId) setSelected(null);
+    };
+    addEventListener('popstate', syncProductRoute);
+    return () => removeEventListener('popstate', syncProductRoute);
+  }, []);
+
+  useEffect(() => {
+    if (!productRouteId || loading || openedRouteRef.current === productRouteId) return;
+    const match = products.find((product) => product.id === productRouteId);
+    if (match) openProduct(match, false);
+  }, [productRouteId, products, loading]);
+
+  useEffect(() => {
     const copy = collectionCopy[category];
+    if (productIdFromPath(location.pathname)) return; // Server supplies ad-page product metadata.
     document.title = copy ? `${copy.title} | REBORN Collections` : 'REBORN Fashion | Women, Men, Kids, Wigs, Shoes & Perfumes';
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', copy ? `${copy.text} Wholesale and retail shopping from REBORN Collections.` : 'Shop REBORN for women, men and kids fashion, wigs, shoes and perfumes. Wholesale and retail orders with WhatsApp availability confirmation.');
@@ -260,7 +283,31 @@ function App() {
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const cartTotal = cart.reduce((sum, item) => sum + effectivePrice(item.product) * item.qty, 0);
 
-  function openProduct(p: Product) {
+  function closeProduct() {
+    setSelected(null);
+    if (productIdFromPath(location.pathname)) {
+      window.history.replaceState(null, '', '/');
+      setProductRouteId(null);
+      openedRouteRef.current = null;
+    }
+  }
+
+  async function copyProductLink(product: Product) {
+    const link = new URL(productPath(product), window.location.origin).toString();
+    try {
+      await navigator.clipboard.writeText(link);
+      setShareMessage('Advertising link copied for ' + product.name);
+    } catch {
+      setShareMessage('Copy this advertising link: ' + link);
+    }
+  }
+
+  function openProduct(p: Product, updateUrl = true) {
+    if (updateUrl) {
+      window.history.pushState(null, '', productPath(p));
+      setProductRouteId(p.id);
+    }
+    openedRouteRef.current = p.id;
     metaTrack('ViewContent', { content_ids: [p.id], content_name: p.name, content_category: p.category, content_type: 'product', value: effectivePrice(p), currency: 'NGN' });
     setSelected(p);
     setGalleryIndex(0);
@@ -281,7 +328,7 @@ function App() {
       }
       return [...current, { product: p, qty: 1, size }];
     });
-    setSelected(null);
+    closeProduct();
     setCartOpen(true);
   }
 
@@ -360,7 +407,7 @@ function App() {
             <button className='menu' aria-controls='collection-navigation' aria-label={menu ? 'Close collections menu' : 'Open collections menu'} aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? <X /> : <Menu />}</button>
           </div>
         </nav>
-        <section className='hero'>
+        {!productRouteId && <section className='hero'>
           <div>
             <small>{category === 'All' ? 'WHOLESALE & RETAIL' : 'REBORN COLLECTION'}</small>
             <h1>{category === 'All' ? settings.heroTitle : collectionCopy[category]?.title || category + ' Collection'}</h1>
@@ -378,10 +425,16 @@ function App() {
           ) : (
             <div className='heroBox'><ShoppingBag /><b>REBORN Collections</b><span>{settings.address}</span></div>
           )}
-        </section>
+        </section>}
       </header>
 
+      {shareMessage && <div className='adCopyNotice' role='status' aria-live='polite'>{shareMessage}</div>}
       <main id='shop'>
+        {productRouteId ? (
+          <div className='adProductLanding' role='status'>
+            {loading ? 'Loading product details…' : products.some((product) => product.id === productRouteId) ? 'REBORN product details' : 'This product is no longer available. Browse our catalogue from the homepage.'}
+          </div>
+        ) : <>
         {category === 'All' && !comboSaleOnly && <>
           <section className='storeBenefits' aria-label='Shopping benefits'>
             <div><Sparkles size={23} /><div><b>Style across collections</b><span>Fashion, footwear, wigs and accessories in one catalogue.</span></div></div>
@@ -398,7 +451,7 @@ function App() {
           </section>}
           {featuredProducts.length > 0 && <section className='featuredEdit' aria-label='Featured products'>
             <div className='editorialHeading'><div><small>Selected for you</small><h2>The REBORN edit</h2><p>A selection from our current catalogue.</p></div><a href='#product-catalogue'>Explore everything <ArrowRight size={16}/></a></div>
-            <ProductGrid list={featuredProducts} loading={false} open={openProduct} add={addToCart} />
+            <ProductGrid list={featuredProducts} loading={false} open={openProduct} add={addToCart} share={copyProductLink} />
           </section>}
         </>}
 
@@ -492,11 +545,11 @@ function App() {
                   ))}
                 </div>
               </aside>
-              <ProductGrid list={visibleProducts} loading={loading} open={openProduct} add={addToCart} />
+              <ProductGrid list={visibleProducts} loading={loading} open={openProduct} add={addToCart} share={copyProductLink} />
             </div>
           </>
         )}
-        {category !== 'Men' && <ProductGrid list={visibleProducts} loading={loading} open={openProduct} add={addToCart} />}
+        {category !== 'Men' && <ProductGrid list={visibleProducts} loading={loading} open={openProduct} add={addToCart} share={copyProductLink} />}
         {!loading && visibleCount < list.length && <div className='loadMoreRow'><span>Showing {visibleProducts.length} of {list.length} products</span><button type='button' onClick={() => setVisibleCount((count) => count + 24)}>Load more styles</button></div>}
         {category === 'All' && !comboSaleOnly && <section className='orderSteps'>
           <div className='editorialHeading'><div><small>How to shop</small><h2>From discovery to your door</h2><p>Shop your way and confirm the details with REBORN.</p></div></div>
@@ -506,15 +559,16 @@ function App() {
             <article><b>03</b><h3>Confirm</h3><p>Send your order through WhatsApp to confirm availability and delivery details.</p></article>
           </div>
         </section>}
+        </>}
       </main>
 
       <footer><b>{settings.brand}</b><span>{settings.tagline}</span><a onClick={() => metaTrack('Contact', { content_name: 'Footer WhatsApp' })} href={'https://wa.me/' + phoneNumber(settings.whatsapp)}>WhatsApp</a></footer>
       <a className='float' onClick={() => metaTrack('Contact', { content_name: 'Floating WhatsApp chat' })} href={'https://wa.me/' + phoneNumber(settings.whatsapp)}><MessageCircle /> Chat</a>
 
       {selected && (
-        <div className='modal' onClick={() => setSelected(null)}>
-          <div className='productModal' onClick={(e) => e.stopPropagation()}>
-            <button className='close' onClick={() => setSelected(null)}><X /></button>
+        <div className='modal' role='presentation' onClick={closeProduct}>
+          <div className='productModal' role='dialog' aria-modal='true' aria-label={selected.name} onClick={(e) => e.stopPropagation()}>
+            <button className='close' aria-label='Close product details' onClick={closeProduct}><X /></button>
             <div className='gallery'>
               <CatalogueImage src={selected.images?.[galleryIndex] || selected.image} alt={selected.name} eager width={960} sizes='(max-width: 900px) 90vw, 480px' />
               {selected.images && selected.images.length > 1 && (
@@ -535,6 +589,7 @@ function App() {
                 </label>
               )}
               <div className='productActions'>
+                <button className='adCopyButton' type='button' onClick={() => copyProductLink(selected)}><Link2 size={18} /> Copy product link for ads</button>
                 <button className='addCart' disabled={!selected.inStock} onClick={() => addToCart(selected, selectedSize || undefined)}><ShoppingCart size={18} /> Add to cart</button>
                 <button className='whatsappButton' disabled={!selected.inStock} onClick={() => singleWhatsAppCheckout(selected, selectedSize || undefined)}><MessageCircle size={18} /> Buy on WhatsApp</button>
                 <a onClick={() => metaTrack('Contact', { content_ids: [selected.id], content_name: selected.name, content_category: selected.category })} href={'https://wa.me/' + phoneNumber(settings.whatsapp) + '?text=' + encodeURIComponent('Hello REBORN, is ' + selected.name + (selectedSize ? ' in size ' + selectedSize : '') + ' available?')}>
@@ -593,11 +648,13 @@ function ProductGrid({
   loading,
   open,
   add,
+  share,
 }: {
   list: Product[];
   loading: boolean;
   open: (p: Product) => void;
   add: (p: Product, size?: string) => void;
+  share: (p: Product) => void;
 }) {
   if (loading) return <div className='empty'>Loading…</div>;
   if (!list.length) return <div className='empty'><Package /><b>No products match these filters</b><p>Try another brand, size or collection.</p></div>;
@@ -613,6 +670,7 @@ function ProductGrid({
             <div className='sizeLine'>{(p.sizes || []).slice(0, 6).map((s) => <span key={s}>{s}</span>)}</div>
             <div className='cardActions'>
               <button onClick={() => open(p)}>View</button>
+              <button className='adCopyButton' type='button' title={'Copy advertising link for ' + p.name} onClick={() => share(p)}><Link2 size={15} /> Copy link</button>
               <button disabled={!p.inStock} onClick={() => add(p, p.sizes?.[0])}><ShoppingCart size={15} /> {p.inStock ? 'Add' : 'Sold out'}</button>
             </div>
           </div>
