@@ -65,3 +65,10 @@
 @media(max-width:600px){.site nav{height:72px;padding:0 18px}.site .announcement{font-size:10px;line-height:1.5;letter-spacing:.06em}.site .hero{padding:40px 18px 0;gap:6px}.site .hero h1{font-size:clamp(44px,11.5vw,64px);line-height:1.04}.site .hero p{font-size:15px}.site .heroVisual{height:360px;margin-top:24px}.site main{padding:22px 16px 0}.storeBenefits{grid-template-columns:1fr;gap:10px;padding:16px;margin-bottom:46px}.storeBenefits>div{padding:4px}.editorialHeading{display:block}.editorialHeading a{display:inline-block;margin-top:16px}.collectionTiles{gap:10px}.collectionTile{min-height:220px}.collectionTile strong{font-size:21px}.collectionTile .collectionText{padding:14px}.featuredEdit{margin-bottom:35px}.site .grid,.site .menShop .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.site .grid .photo{height:210px}.site .info{padding:11px}.site .info h3{font-size:13px;min-height:35px}.site .info>div{display:block}.site .info b{font-size:14px}.site .info em{display:block;margin-top:5px}.site .cardActions{grid-template-columns:1fr}.site .cardActions button{min-height:38px;font-size:12px}.orderSteps{padding:20px;margin:38px 0}.orderStepsGrid{grid-template-columns:1fr;gap:10px}.orderStepsGrid article{padding:7px}.site .shopHead{padding-top:25px}.site .shopHead h2{font-size:33px}}
 @media(max-width:360px){.site .grid .photo{height:185px}.collectionTile{min-height:190px}.site .info{padding:8px}}
 @media(prefers-reduced-motion:reduce){.site .collectionTile img,.site .grid .photo img{transition:none}}
+
+/* Render catalogue incrementally, with a clear continuation control. */
+.loadMoreRow{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;padding:28px 12px 12px}
+.loadMoreRow span{font-size:13px;color:#745e55}
+.loadMoreRow button{min-height:44px;border:0;border-radius:9px;padding:12px 22px;background:#39251a;color:#fff;font-weight:900;cursor:pointer}
+.loadMoreRow button:hover{background:#9c4625}
+@media(max-width:600px){.loadMoreRow{flex-direction:column;gap:12px}.loadMoreRow button{width:100%}}
