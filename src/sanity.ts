@@ -84,8 +84,15 @@ const query = `{
   }
 }`;
 
-export async function getSiteData() {
-  const data = await sanity.fetch<{ settings?: RawSettings; products?: RawProduct[] }>(query);
+type RawSiteData = { settings?: RawSettings; products?: RawProduct[] };
+
+// Ad clicks fetch just the advertised product, not every catalogue item.
+const singleProductQuery = query.replace(
+  '*[_type == "product"] | order(_createdAt desc)',
+  '*[_type == "product" && _id == $id]',
+);
+
+function normalizeSiteData(data: RawSiteData) {
   const settings = {
     ...(data.settings || {}),
     logoUrl: data.settings?.logo?.asset?.url || '',
@@ -114,6 +121,14 @@ export async function getSiteData() {
   });
 
   return { settings, products };
+}
+
+export async function getSiteData() {
+  return normalizeSiteData(await sanity.fetch<RawSiteData>(query));
+}
+
+export async function getProductPageData(id: string) {
+  return normalizeSiteData(await sanity.fetch<RawSiteData>(singleProductQuery, { id }));
 }
 
 // Full-size galleries are fetched only after a shopper opens a product, not for the whole catalogue.
