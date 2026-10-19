@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { getProductImages, getSiteData } from './sanity';
+import { getProductImages, getProductPageData, getSiteData } from './sanity';
 import { imageSrcSet, imageUrl } from './image';
 import { productIdFromPath, productPath } from './product-links';
 import { collectionSlug, effectivePrice, phoneNumber } from './storefront';
@@ -139,6 +139,7 @@ function App() {
   const [selected, setSelected] = useState<Product | null>(null);
   const [productRouteId, setProductRouteId] = useState<string | null>(() => productIdFromPath(location.pathname));
   const openedRouteRef = useRef<string | null>(null);
+  const hasFullCatalogueRef = useRef(false);
   const [shareMessage, setShareMessage] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
   const [menu, setMenu] = useState(false);
@@ -230,7 +231,10 @@ function App() {
 
   async function load() {
     try {
-      const data = await getSiteData();
+      const directProduct = productIdFromPath(location.pathname);
+      const fullCatalogue = !directProduct || hasFullCatalogueRef.current;
+      const data = fullCatalogue ? await getSiteData() : await getProductPageData(directProduct);
+      if (fullCatalogue) hasFullCatalogueRef.current = true;
       setSettings({ ...defaults, ...data.settings });
       setProducts(data.products || []);
       setCatalogError(false);
@@ -289,6 +293,10 @@ function App() {
       window.history.replaceState(null, '', '/');
       setProductRouteId(null);
       openedRouteRef.current = null;
+      if (!hasFullCatalogueRef.current) {
+        setLoading(true);
+        void load();
+      }
     }
   }
 
