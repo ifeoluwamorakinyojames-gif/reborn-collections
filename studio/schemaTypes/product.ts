@@ -49,6 +49,13 @@ export const product = defineType({
       options: { layout: 'tags' },
     }),
     defineField({
+      name: 'adImage',
+      title: 'Advertising / link preview image (optional)',
+      type: 'image',
+      description: 'Optional social sharing preview. If empty, the first product photo will be used. Recommended: upload a clear high-resolution product photo.',
+      options: { hotspot: true },
+    }),
+    defineField({
       name: 'images',
       title: 'Product images',
       type: 'array',

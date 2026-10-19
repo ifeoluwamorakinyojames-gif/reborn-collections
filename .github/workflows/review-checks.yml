@@ -1,0 +1,32 @@
+name: Frontend review checks (no deployment)
+on:
+  push:
+    branches:
+      - feat/conversion-homepage-audit-20261019
+  pull_request:
+    branches:
+      - feat/sanity-homepage-refresh
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck, tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Check types
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Production build (no deploy)
+        run: npm run build
+      - name: Compile Cloudflare product preview Functions (no deploy)
+        run: npm run build:functions

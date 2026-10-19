@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "dev:full": "npm run build && wrangler pages dev dist"
+    "dev:full": "npm run build && wrangler pages dev dist",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "build:functions": "wrangler pages functions build functions --outfile=./.tmp/product-ad-pages-worker.js"
   },
   "dependencies": {
     "lucide-react": "^0.469.0",
