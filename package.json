@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "dev:full": "npm run build && wrangler pages dev dist",
-    "test": "node --experimental-strip-types --test tests/storefront.test.ts",
+    "test": "node --experimental-strip-types --test tests/image.test.ts tests/storefront.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
