@@ -72,3 +72,11 @@
 .loadMoreRow button{min-height:44px;border:0;border-radius:9px;padding:12px 22px;background:#39251a;color:#fff;font-weight:900;cursor:pointer}
 .loadMoreRow button:hover{background:#9c4625}
 @media(max-width:600px){.loadMoreRow{flex-direction:column;gap:12px}.loadMoreRow button{width:100%}}
+
+/* Product-specific ad links and lightweight direct landing page. */
+.adCopyNotice{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:90;max-width:min(640px,92vw);max-height:25vh;overflow-wrap:anywhere;background:#2b1e16;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 12px 35px #0004;font-size:13px}
+.adProductLanding{min-height:240px;display:grid;place-items:center;text-align:center;color:#705649;padding:48px 18px}
+.site .cardActions .adCopyButton{grid-column:1/-1;background:#f2e5dc;color:#723b26}
+.site .productActions .adCopyButton{background:#f3e7e0;color:#753b20;border:1px solid #e2c8b7;border-radius:12px;padding:13px 16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.site .cardActions .adCopyButton:hover,.site .productActions .adCopyButton:hover{background:#e9d6c7}
+@media(max-width:600px){.adCopyNotice{width:92vw}.site .productModal{width:100%;border-radius:16px}}
