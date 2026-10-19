@@ -61,7 +61,6 @@ type Product = {
   originalImagePaths?: string[];
 };
 
-type Draft = Omit<Product, 'id' | 'image'>;
 type CartItem = { product: Product; qty: number; size?: string };
 
 const defaults: Settings = {
@@ -76,19 +75,6 @@ const defaults: Settings = {
   whatsapp: '09060759664',
   phone: '07031339024',
   address: 'Warri, Delta State, Nigeria',
-};
-
-const blank: Draft = {
-  name: '',
-  category: 'Women',
-  brand: 'REBORN',
-  price: 0,
-  wholesalePrice: 0,
-  description: '',
-  inStock: true,
-  sizes: ['S', 'M', 'L', 'XL', '2XL', '3XL'],
-  colors: [],
-  imagePaths: [],
 };
 
 const cats = ['All', 'Women', 'Men', 'Unisex', 'Kids', 'Wigs', 'Shoes', 'Perfumes', 'Accessories'];
