@@ -670,8 +670,8 @@ function ProductGrid({
             <div className='sizeLine'>{(p.sizes || []).slice(0, 6).map((s) => <span key={s}>{s}</span>)}</div>
             <div className='cardActions'>
               <button onClick={() => open(p)}>View</button>
-              <button className='adCopyButton' type='button' title={'Copy advertising link for ' + p.name} onClick={() => share(p)}><Link2 size={15} /> Copy link</button>
               <button disabled={!p.inStock} onClick={() => add(p, p.sizes?.[0])}><ShoppingCart size={15} /> {p.inStock ? 'Add' : 'Sold out'}</button>
+              <button className='adCopyButton' type='button' title={'Copy advertising link for ' + p.name} onClick={() => share(p)}><Link2 size={15} /> Copy ad link</button>
             </div>
           </div>
         </article>
