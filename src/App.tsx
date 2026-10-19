@@ -335,7 +335,7 @@ function App() {
             <button className='cartButton' onClick={() => setCartOpen(true)}>
               <ShoppingCart size={19} /> Cart {cartCount > 0 && <span>{cartCount}</span>}
             </button>
-            <button className='menu' onClick={() => setMenu(!menu)}>{menu ? <X /> : <Menu />}</button>
+            <button className='menu' aria-label={menu ? 'Close collections menu' : 'Open collections menu'} aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? <X /> : <Menu />}</button>
           </div>
         </nav>
         <section className='hero'>
@@ -343,7 +343,10 @@ function App() {
             <small>{category === 'All' ? 'WHOLESALE & RETAIL' : 'REBORN COLLECTION'}</small>
             <h1>{category === 'All' ? settings.heroTitle : collectionCopy[category]?.title || category + ' Collection'}</h1>
             <p>{category === 'All' ? settings.heroText : collectionCopy[category]?.text}</p>
-            <a href='#shop'>{category === 'All' ? 'Shop Collection' : 'Shop ' + category}</a>
+            <div className='heroCtas'>
+              <a href='#shop'>{category === 'All' ? 'Explore collections' : 'Shop ' + category}</a>
+              <a className='heroSecondary' href={'https://wa.me/' + phoneNumber(settings.whatsapp) + '?text=' + encodeURIComponent('Hello REBORN, I would like help choosing from your fashion collection.')} target='_blank' rel='noopener noreferrer'><MessageCircle size={18} /> Chat to shop</a>
+            </div>
           </div>
           {settings.heroImageUrl ? (
             <div className='heroVisual'>
