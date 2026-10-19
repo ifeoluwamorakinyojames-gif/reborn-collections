@@ -7,7 +7,8 @@ export const sanity = createClient({
   projectId,
   dataset,
   apiVersion: '2026-09-29',
-  useCdn: false,
+  // Public storefront reads are safe to cache at Sanity's CDN edge.
+  useCdn: true,
 });
 
 type SanityImage = {
@@ -46,7 +47,7 @@ type RawProduct = {
   salePrice?: number;
   sizes?: string[];
   colors?: string[];
-  images?: SanityImage[];
+  coverUrl?: string;
 };
 
 const query = `{
@@ -79,7 +80,7 @@ const query = `{
     salePrice,
     sizes,
     colors,
-    images[]{asset->{url}}
+    "coverUrl": images[0].asset->url
   }
 }`;
 
@@ -92,7 +93,7 @@ export async function getSiteData() {
   };
 
   const products = (data.products || []).map((p) => {
-    const urls = (p.images || []).map((img) => img.asset?.url || '').filter(Boolean);
+    const cover = p.coverUrl || '';
     return {
       id: p._id,
       name: p.name || '',
@@ -107,10 +108,25 @@ export async function getSiteData() {
       salePrice: p.salePrice ? Number(p.salePrice) : undefined,
       sizes: p.sizes || [],
       colors: p.colors || [],
-      image: urls[0] || '',
-      images: urls,
+      image: cover,
+      images: cover ? [cover] : [],
     };
   });
 
   return { settings, products };
+}
+
+// Full-size galleries are fetched only after a shopper opens a product, not for the whole catalogue.
+const galleries = new Map<string, Promise<string[]>>();
+
+export function getProductImages(id: string): Promise<string[]> {
+  const cached = galleries.get(id);
+  if (cached) return cached;
+  const request = sanity.fetch<SanityImage[]>(
+    '*[_type == "product" && _id == $id][0].images[]{asset->{url}}',
+    { id },
+  ).then((images) => (images || []).map((img) => img?.asset?.url || '').filter(Boolean));
+  galleries.set(id, request);
+  request.catch(() => { galleries.delete(id); });
+  return request;
 }
