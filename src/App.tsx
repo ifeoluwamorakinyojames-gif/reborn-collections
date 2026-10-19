@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { getSiteData } from './sanity';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { getProductImages, getSiteData } from './sanity';
+import { imageSrcSet, imageUrl } from './image';
 import { collectionSlug, effectivePrice, phoneNumber } from './storefront';
-import AdminPanel from './AdminPanel';
+
 import {
   ArrowRight,
   CheckCircle2,
@@ -18,6 +19,8 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
+
+const AdminPanel = lazy(() => import('./AdminPanel'));
 
 type Settings = {
   brand: string;
@@ -151,6 +154,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [catalogError, setCatalogError] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(24);
   const [menTab, setMenTab] = useState(initialCollection.subcategory || 'All Men');
   const [menBrand, setMenBrand] = useState('All');
   const [menSize, setMenSize] = useState('All');
@@ -231,8 +235,10 @@ function App() {
 
   useEffect(() => {
     load();
-    const timer = setInterval(load, 60000);
-    return () => clearInterval(timer);
+    const timer = setInterval(() => { if (!document.hidden) void load(); }, 120000);
+    const refreshOnFocus = () => { if (!document.hidden) void load(); };
+    document.addEventListener('visibilitychange', refreshOnFocus);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', refreshOnFocus); };
   }, []);
 
   const menProducts = products.filter((p) => p.category === 'Men');
@@ -260,6 +266,11 @@ function App() {
     return (promoted.length ? promoted : products.filter((product) => product.inStock)).slice(0, 4);
   }, [products]);
 
+  useEffect(() => {
+    setVisibleCount(24);
+  }, [category, menTab, menBrand, menSize, comboSaleOnly]);
+  const visibleProducts = useMemo(() => list.slice(0, visibleCount), [list, visibleCount]);
+
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const cartTotal = cart.reduce((sum, item) => sum + effectivePrice(item.product) * item.qty, 0);
 
@@ -268,6 +279,11 @@ function App() {
     setSelected(p);
     setGalleryIndex(0);
     setSelectedSize(p.sizes?.[0] || '');
+    void getProductImages(p.id).then((images) => {
+      if (images.length) setSelected((current) => current?.id === p.id ? { ...current, images } : current);
+    }).catch(() => {
+      // Retain the cover image if a gallery request fails.
+    });
   }
 
   function addToCart(p: Product, size?: string) {
@@ -334,7 +350,7 @@ function App() {
     window.open('https://wa.me/' + phoneNumber(settings.whatsapp) + '?text=' + encodeURIComponent(text), '_blank');
   }
 
-  if (adminMode) return <AdminPanel />;
+  if (adminMode) return <Suspense fallback={<div role='status' className='empty'>Loading admin…</div>}><AdminPanel /></Suspense>;
 
   return (
     <div className='site'>
@@ -342,7 +358,7 @@ function App() {
         <div className='announcement'><span>Style for every day · Wholesale & retail</span><a href='#shop'>Shop the catalogue →</a></div>
         <nav aria-label='Main navigation'>
           <a href='#top' className='brand'>
-            {settings.logoUrl ? <img src={settings.logoUrl} alt='REBORN logo' /> : settings.brand}
+            {settings.logoUrl ? <img src={imageUrl(settings.logoUrl, 350, 80)} alt='REBORN logo' decoding='async' /> : settings.brand}
           </a>
           <div id='collection-navigation' className={'nav ' + (menu ? 'open' : '')}>
             {cats.slice(1).map((c) => (
@@ -371,7 +387,7 @@ function App() {
           {settings.heroImageUrl ? (
             <div className='heroVisual'>
               <div className='heroArch'></div>
-              <img src={settings.heroImageUrl} alt='REBORN featured collection' fetchPriority='high' decoding='async' />
+              <img src={imageUrl(settings.heroImageUrl, 960, 80)} srcSet={imageSrcSet(settings.heroImageUrl, [480, 720, 960, 1280])} sizes='(max-width: 900px) 90vw, 520px' alt='REBORN featured collection' fetchPriority='high' loading='eager' decoding='async' />
             </div>
           ) : (
             <div className='heroBox'><ShoppingBag /><b>REBORN Collections</b><span>{settings.address}</span></div>
@@ -422,7 +438,7 @@ function App() {
               const item = newArrivals[newArrivalIndex % newArrivals.length];
               return (
                 <div className='newArrivalSlide'>
-                  <button className='newArrivalImage' onClick={() => openProduct(item)}><CatalogueImage src={item.image} alt={item.name} eager /><span>NEW ARRIVAL</span></button>
+                  <button className='newArrivalImage' onClick={() => openProduct(item)}><CatalogueImage src={item.image} alt={item.name} /><span>NEW ARRIVAL</span></button>
                   <div className='newArrivalCopy'>
                     <small>{item.brand || 'REBORN'} · {item.category}</small>
                     <h3>{item.name}</h3>
@@ -490,11 +506,12 @@ function App() {
                   ))}
                 </div>
               </aside>
-              <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} />
+              <ProductGrid list={visibleProducts} loading={loading} open={openProduct} add={addToCart} />
             </div>
           </>
         )}
-        {category !== 'Men' && <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} />}
+        {category !== 'Men' && <ProductGrid list={visibleProducts} loading={loading} open={openProduct} add={addToCart} />}
+        {!loading && visibleCount < list.length && <div className='loadMoreRow'><span>Showing {visibleProducts.length} of {list.length} products</span><button type='button' onClick={() => setVisibleCount((count) => count + 24)}>Load more styles</button></div>}
         {category === 'All' && !comboSaleOnly && <section className='orderSteps'>
           <div className='editorialHeading'><div><small>How to shop</small><h2>From discovery to your door</h2><p>Shop your way and confirm the details with REBORN.</p></div></div>
           <div className='orderStepsGrid'>
@@ -513,9 +530,9 @@ function App() {
           <div className='productModal' onClick={(e) => e.stopPropagation()}>
             <button className='close' onClick={() => setSelected(null)}><X /></button>
             <div className='gallery'>
-              <CatalogueImage src={selected.images?.[galleryIndex] || selected.image} alt={selected.name} eager />
+              <CatalogueImage src={selected.images?.[galleryIndex] || selected.image} alt={selected.name} eager width={960} sizes='(max-width: 900px) 90vw, 480px' />
               {selected.images && selected.images.length > 1 && (
-                <div className='galleryThumbButtons'>{selected.images.map((img, n) => <button key={img + n} className={n === galleryIndex ? 'active' : ''} aria-label={'Show image ' + (n + 1)} aria-pressed={n === galleryIndex} onClick={() => setGalleryIndex(n)}><CatalogueImage src={img} alt={selected.name + ' view ' + (n + 1)} /></button>)}</div>
+                <div className='galleryThumbButtons'>{selected.images.map((img, n) => <button key={img + n} className={n === galleryIndex ? 'active' : ''} aria-label={'Show image ' + (n + 1)} aria-pressed={n === galleryIndex} onClick={() => setGalleryIndex(n)}><CatalogueImage src={img} alt={selected.name + ' view ' + (n + 1)} width={140} sizes='70px' /></button>)}</div>
               )}
             </div>
             <div className='detail'>
@@ -578,8 +595,8 @@ function App() {
   );
 }
 
-function CatalogueImage({ src, alt, eager = false }: { src: string; alt: string; eager?: boolean }) {
-  return <img src={src || '/reborn-icon.svg'} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding='async' onError={event => {
+function CatalogueImage({ src, alt, eager = false, width = 640, sizes = '(max-width: 600px) 46vw, (max-width: 900px) 44vw, 280px' }: { src: string; alt: string; eager?: boolean; width?: number; sizes?: string }) {
+  return <img src={imageUrl(src, width)} srcSet={imageSrcSet(src, width <= 140 ? [140] : [320, 480, 640, 960])} sizes={sizes} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding='async' onError={event => {
     const img = event.currentTarget;
     if (!img.src.endsWith('/reborn-icon.svg')) img.src = '/reborn-icon.svg';
   }} />;
@@ -602,7 +619,7 @@ function ProductGrid({
     <div className='grid'>
       {list.map((p) => (
         <article key={p.id}>
-          <button className='photo' onClick={() => open(p)}><img src={p.image} alt={p.name} />{p.badge && <span>{p.badge}</span>}</button>
+          <button className='photo' onClick={() => open(p)}><CatalogueImage src={p.image} alt={p.name} />{p.badge && <span>{p.badge}</span>}</button>
           <div className='info'>
             <small>{p.brand || 'REBORN'} · {p.category}{p.subcategory ? ' · ' + p.subcategory : ''}</small>
             <h3>{p.name}</h3>
