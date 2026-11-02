@@ -10,6 +10,16 @@ export const sanity = createClient({
   useCdn: true,
 });
 
+function optimizedImage(url: string, width: number): string {
+  if (!url.startsWith('https://cdn.sanity.io/images/')) return url;
+  const parsed = new URL(url);
+  parsed.searchParams.set('w', String(width));
+  parsed.searchParams.set('fit', 'max');
+  parsed.searchParams.set('auto', 'format');
+  parsed.searchParams.set('q', '75');
+  return parsed.toString();
+}
+
 type SanityImage = {
   asset?: {
     url?: string;
@@ -87,8 +97,8 @@ export async function getSiteData() {
   const data = await sanity.fetch<{ settings?: RawSettings; products?: RawProduct[] }>(query);
   const settings = {
     ...(data.settings || {}),
-    logoUrl: data.settings?.logo?.asset?.url || '',
-    heroImageUrl: data.settings?.heroImage?.asset?.url || '',
+    logoUrl: optimizedImage(data.settings?.logo?.asset?.url || '', 360),
+    heroImageUrl: optimizedImage(data.settings?.heroImage?.asset?.url || '', 1200),
   };
 
   const products = (data.products || []).map((p) => {
@@ -107,8 +117,8 @@ export async function getSiteData() {
       salePrice: p.salePrice ? Number(p.salePrice) : undefined,
       sizes: p.sizes || [],
       colors: p.colors || [],
-      image: urls[0] || '/reborn-logo.svg',
-      images: urls,
+      image: urls[0] ? optimizedImage(urls[0], 640) : '/reborn-logo.svg',
+      images: urls.map((url) => optimizedImage(url, 1200)),
     };
   });
 
