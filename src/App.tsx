@@ -377,36 +377,6 @@ function App() {
             <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><img src={p.image} alt={p.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3><a href={'/product/' + encodeURIComponent(p.id)}>{p.name}</a></h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
           </section>
         )}
-        {newArrivals.length > 0 && !comboSaleOnly && (
-          <section className='newArrivalShowcase' aria-label='New arrivals slideshow'>
-            <div className='newArrivalTop'>
-              <div><small>JUST DROPPED</small><h2>New Arrivals</h2></div>
-              <div className='newArrivalControls'>
-                <button aria-label='Previous new arrival' onClick={() => setNewArrivalIndex((newArrivalIndex - 1 + newArrivals.length) % newArrivals.length)}>‹</button>
-                <button aria-label='Next new arrival' onClick={() => setNewArrivalIndex((newArrivalIndex + 1) % newArrivals.length)}>›</button>
-              </div>
-            </div>
-            {(() => {
-              const item = newArrivals[newArrivalIndex % newArrivals.length];
-              return (
-                <div className='newArrivalSlide'>
-                  <button className='newArrivalImage' onClick={() => openProduct(item)}><img src={item.image} alt={item.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} /><span>NEW ARRIVAL</span></button>
-                  <div className='newArrivalCopy'>
-                    <small>{item.brand || 'REBORN'} · {item.category}</small>
-                    <h3>{item.name}</h3>
-                    <strong>{money(effectivePrice(item))}</strong>
-                    
-                    <div className='newArrivalActions'>
-                      <button onClick={() => openProduct(item)}>View product</button>
-                      
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-            {newArrivals.length > 1 && <div className='newArrivalDots'>{newArrivals.map((item, i) => <button key={item.id} aria-label={'Show new arrival ' + (i + 1)} className={i === newArrivalIndex ? 'active' : ''} onClick={() => setNewArrivalIndex(i)} />)}</div>}
-          </section>
-        )}
         <div className='shopHead'>
           <div>
             <small>DISCOVER THE COLLECTION</small>
