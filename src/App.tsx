@@ -328,6 +328,7 @@ function App() {
   return (
     <div className='site'>
       <header>
+        <div className='announcementBar'>THE REBORN EDIT · FASHION FOR EVERY OCCASION <span>WHOLESALE & RETAIL · WARRI, NIGERIA</span></div>
         <nav>
           <a href='#top' className='brand'>
             {settings.logoUrl ? <img src={settings.logoUrl} alt='REBORN logo' /> : settings.brand}
@@ -365,6 +366,8 @@ function App() {
       </header>
 
       <main id='shop'>
+        {category === 'All' && !comboSaleOnly && <section className='editorialIntro' aria-label='Explore fashion collections'><div><small>THE REBORN EDIT</small><h2>Find your next favourite look.</h2><p>Thoughtfully curated fashion, wigs, footwear and accessories for everyday style and special moments.</p></div><div className='editorialCategories'>{['Women','Men','Kids','Wigs','Shoes','Accessories'].map((c) => <button key={c} onClick={() => { location.hash = '#collection/' + collectionSlug(c); setCategory(c); }}><span>{c}</span><span aria-hidden='true'>↗</span></button>)}</div></section>}
+
         {comboSales.length > 0 && !comboSaleOnly && (
           <section className='newArrivalShowcase' aria-label='Combo sales promotion'>
             <div className='newArrivalTop'>
@@ -406,9 +409,9 @@ function App() {
         )}
         <div className='shopHead'>
           <div>
-            <small>LIVE FROM ADMIN</small>
-            <h2>{comboSaleOnly ? settings.comboSaleTitle : category === 'All' ? 'Current products' : collectionCopy[category]?.title || category + ' Collection'}</h2>
-            <p>{comboSaleOnly ? settings.comboSaleText : category === 'All' ? 'Everything shown here is loaded from the backend database.' : collectionCopy[category]?.text}</p>
+            <small>DISCOVER THE COLLECTION</small>
+            <h2>{comboSaleOnly ? settings.comboSaleTitle : category === 'All' ? 'Shop the latest edit' : collectionCopy[category]?.title || category + ' Collection'}</h2>
+            <p>{comboSaleOnly ? settings.comboSaleText : category === 'All' ? 'Explore the newest pieces in our fashion collection. Confirm stock and sizing before ordering.' : collectionCopy[category]?.text}</p>
           </div>
           <button onClick={load}><RefreshCw size={17} /> Refresh</button>
         </div>
