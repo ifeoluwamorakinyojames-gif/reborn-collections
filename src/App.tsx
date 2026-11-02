@@ -380,7 +380,7 @@ function App() {
         {newArrivals.length > 0 && !comboSaleOnly && (
           <section className='newArrivalShowcase' aria-label='New arrivals slideshow'>
             <div className='newArrivalTop'>
-              <div><small>JUST DROPPED</small><h2>New Arrival Alert</h2><p>Fresh styles just landed at REBORN. Tap any slide to see the product or shop its collection.</p></div>
+              <div><small>JUST DROPPED</small><h2>New Arrivals</h2></div>
               <div className='newArrivalControls'>
                 <button aria-label='Previous new arrival' onClick={() => setNewArrivalIndex((newArrivalIndex - 1 + newArrivals.length) % newArrivals.length)}>‹</button>
                 <button aria-label='Next new arrival' onClick={() => setNewArrivalIndex((newArrivalIndex + 1) % newArrivals.length)}>›</button>
@@ -395,10 +395,10 @@ function App() {
                     <small>{item.brand || 'REBORN'} · {item.category}</small>
                     <h3>{item.name}</h3>
                     <strong>{money(effectivePrice(item))}</strong>
-                    <p>{item.description || 'A fresh REBORN arrival ready to shop now.'}</p>
+                    
                     <div className='newArrivalActions'>
                       <button onClick={() => openProduct(item)}>View product</button>
-                      <button onClick={() => { location.hash = '#collection/' + collectionSlug(item.category); setCategory(item.category); }}>Shop {item.category}</button>
+                      
                     </div>
                   </div>
                 </div>
