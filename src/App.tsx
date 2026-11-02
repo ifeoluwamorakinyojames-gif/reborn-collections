@@ -92,7 +92,7 @@ const collectionSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-')
 
 function metaTrack(event: string, data?: Record<string, unknown>) {
   const fbq = (window as any).fbq;
-  if (typeof fbq === 'function') fbq('track', event, data || {});
+  if (typeof fbq === 'function' && (window as any).__rebornMetaPixelId) fbq('track', event, data || {});
   const gtag = (window as any).gtag;
   if (typeof gtag === 'function') {
     const eventName: Record<string, string> = { PageView: 'page_view', ViewContent: 'view_item', AddToCart: 'add_to_cart', InitiateCheckout: 'begin_checkout', Contact: 'contact' };
@@ -304,6 +304,7 @@ function App() {
   function whatsappCheckout() {
     if (!cart.length) return;
     metaTrack('InitiateCheckout', { content_ids: cart.map((item) => item.product.id), content_type: 'product', value: cartTotal, currency: 'NGN', num_items: cart.reduce((sum, item) => sum + item.qty, 0) });
+    metaTrack('Contact', { content_name: 'WhatsApp cart checkout', content_ids: cart.map((item) => item.product.id) });
     const reference = 'RBW-' + Date.now().toString(36).toUpperCase();
     const text = cartSummary('Hello REBORN, I want to checkout these items:') + '\n\nOrder reference: ' + reference + paymentInstructions(cartTotal);
     window.open('https://wa.me/' + phoneNumber(settings.whatsapp) + '?text=' + encodeURIComponent(text), '_blank');
@@ -312,6 +313,7 @@ function App() {
   function singleWhatsAppCheckout(p: Product, size?: string) {
     const total = effectivePrice(p);
     metaTrack('InitiateCheckout', { content_ids: [p.id], content_name: p.name, content_category: p.category, content_type: 'product', value: total, currency: 'NGN', num_items: 1 });
+    metaTrack('Contact', { content_name: 'WhatsApp product checkout', content_ids: [p.id] });
     const reference = 'RBW-' + Date.now().toString(36).toUpperCase();
     const text = [
       'Hello REBORN, I want to buy this item:',
