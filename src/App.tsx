@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { getSiteData } from './sanity';
-import AdminPanel from './AdminPanel';
+const AdminPanel = lazy(() => import('./AdminPanel'));
 import {
   Filter,
   Menu,
@@ -228,7 +228,7 @@ function App() {
 
   useEffect(() => {
     load();
-    const timer = setInterval(() => { if (!document.hidden) void load(); }, 60000);
+    const timer = setInterval(() => { if (!document.hidden) void load(); }, 300000);
     return () => clearInterval(timer);
   }, []);
 
@@ -326,7 +326,7 @@ function App() {
     window.open('https://wa.me/' + phoneNumber(settings.whatsapp) + '?text=' + encodeURIComponent(text), '_blank');
   }
 
-  if (adminMode) return <AdminPanel />;
+  if (adminMode) return <Suspense fallback={<div className='empty'>Loading store management…</div>}><AdminPanel /></Suspense>;
 
   return (
     <div className='site'>
@@ -360,7 +360,7 @@ function App() {
           {settings.heroImageUrl ? (
             <div className='heroVisual'>
               <div className='heroArch'></div>
-              <img src={settings.heroImageUrl} alt='REBORN fashion model' />
+              <img src={settings.heroImageUrl} alt='REBORN fashion model' fetchPriority='high' decoding='async' />
             </div>
           ) : (
             <div className='heroBox'><ShoppingBag /><b>REBORN Collections</b><span>{settings.address}</span></div>
