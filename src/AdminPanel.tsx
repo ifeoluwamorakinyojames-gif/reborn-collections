@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ImagePlus, KeyRound, LogOut, PackagePlus, RefreshCw, Save, Trash2, UploadCloud, UserPlus } from 'lucide-react';
+import { ArrowLeft, ImagePlus, KeyRound, LogOut, PackagePlus, RefreshCw, Save, Trash2, UploadCloud, UserPlus, Copy, ExternalLink } from 'lucide-react';
 import './admin.css';
 
 type AdminProduct = {
@@ -233,6 +233,12 @@ export default function AdminPanel() {
     finally { setBusy(false); }
   }
 
+  async function copyProductLink(id: string) {
+    const url = 'https://reborncollections.com/product/' + encodeURIComponent(id);
+    try { await navigator.clipboard.writeText(url); setMessage('Product link copied: ' + url); }
+    catch { window.prompt('Copy this product link:', url); }
+  }
+
   async function deleteProduct(id: string) {
     if (!confirm('Delete this product from Sanity?')) return;
     setBusy(true); setError('');
@@ -321,11 +327,13 @@ export default function AdminPanel() {
             </form>
 
             <section className='adminCard'>
-              <h2>Published products</h2>
+              <h2>Published products</h2><p>Every published product has its own shareable link. Use Copy link to send it on WhatsApp, Facebook or Instagram.</p>
               <div className='adminProductList'>
                 {products.map((p) => <div className='adminProductItem' key={p._id}>
                   {p.images?.[0]?.asset?.url ? <img src={p.images[0].asset!.url} alt='' /> : <div className='adminThumb'/>}
-                  <div><b>{p.name}</b><small>{p.category} · ₦{Number(p.price || 0).toLocaleString()}</small></div>
+                  <div style={{minWidth:0,flex:1}}><b>{p.name}</b><small>{p.category} · ₦{Number(p.price || 0).toLocaleString()}</small><input aria-label={'Product URL for ' + p.name} readOnly onFocus={(e) => e.currentTarget.select()} value={'https://reborncollections.com/product/' + encodeURIComponent(p._id)} style={{width:'100%',minWidth:0,fontSize:12,marginTop:6}} /></div>
+                  <button type='button' title='Copy product link' aria-label={'Copy link for ' + p.name} onClick={() => copyProductLink(p._id)}><Copy size={17}/> Copy link</button>
+                  <a title='Open product page' aria-label={'Open ' + p.name} href={'/product/' + encodeURIComponent(p._id)} target='_blank' rel='noopener noreferrer'><ExternalLink size={17}/></a>
                   <button title='Delete' onClick={() => deleteProduct(p._id)}><Trash2 size={17}/></button>
                 </div>)}
                 {!products.length && <p>No products yet.</p>}
