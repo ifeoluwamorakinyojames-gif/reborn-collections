@@ -119,6 +119,7 @@ function initMetaPixel(pixelId: string) {
   if (w.__rebornMetaPixelId !== id) {
     w.fbq('init', id);
     w.__rebornMetaPixelId = id;
+    w.fbq('track', 'PageView');
   }
 }
 
@@ -160,7 +161,6 @@ function App() {
   const [shopSubcategory, setShopSubcategory] = useState('All');
   const [sortOrder, setSortOrder] = useState('featured');
   const [cartOpen, setCartOpen] = useState(false);
-  const [newArrivalIndex, setNewArrivalIndex] = useState(0);
   const [comboSaleOnly, setComboSaleOnly] = useState(location.hash === '#promo/combo-sales');
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
@@ -201,7 +201,8 @@ function App() {
 
   useEffect(() => {
     if (!settings.metaPixelId) return;
-    metaTrack('PageView');
+    // Initial PageView is sent after Pixel initialization; send subsequent virtual page views only.
+    if (category !== 'All' || comboSaleOnly) metaTrack('PageView');
     if (comboSaleOnly) {
       metaTrack('ViewContent', { content_name: settings.comboSaleTitle, content_category: 'Combo Sales', content_type: 'product_group' });
     } else if (category !== 'All') {
@@ -209,15 +210,7 @@ function App() {
     }
   }, [category, comboSaleOnly, settings.metaPixelId, settings.comboSaleTitle]);
 
-  const newArrivals = products.filter((p) => p.badge === 'New Arrival' && (category === 'All' || p.category === category));
   const comboSales = products.filter((p) => p.badge === 'Combo Sale');
-
-  useEffect(() => {
-    setNewArrivalIndex(0);
-    if (newArrivals.length <= 1) return;
-    const timer = setInterval(() => setNewArrivalIndex((current) => (current + 1) % newArrivals.length), 4500);
-    return () => clearInterval(timer);
-  }, [category, products.length, newArrivals.length]);
 
   async function load() {
     try {
