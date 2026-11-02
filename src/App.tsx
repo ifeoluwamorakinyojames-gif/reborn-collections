@@ -93,6 +93,11 @@ const collectionSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-')
 function metaTrack(event: string, data?: Record<string, unknown>) {
   const fbq = (window as any).fbq;
   if (typeof fbq === 'function') fbq('track', event, data || {});
+  const gtag = (window as any).gtag;
+  if (typeof gtag === 'function') {
+    const eventName: Record<string, string> = { PageView: 'page_view', ViewContent: 'view_item', AddToCart: 'add_to_cart', InitiateCheckout: 'begin_checkout', Contact: 'contact' };
+    gtag('event', eventName[event] || event.toLowerCase(), { ...(data || {}), currency: 'NGN' });
+  }
 }
 
 function initMetaPixel(pixelId: string) {
