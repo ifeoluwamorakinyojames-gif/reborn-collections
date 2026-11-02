@@ -366,7 +366,7 @@ export default function AdminPanel() {
             <label>Address<input value={settings.address || ''} onChange={e => setSettings({ ...settings, address: e.target.value })}/></label>
             <div className='adminRow'><label>Combo heading<input value={settings.comboSaleEyebrow || ''} onChange={e => setSettings({ ...settings, comboSaleEyebrow: e.target.value })}/></label><label>Combo title<input value={settings.comboSaleTitle || ''} onChange={e => setSettings({ ...settings, comboSaleTitle: e.target.value })}/></label></div>
             <label>Combo description<textarea value={settings.comboSaleText || ''} onChange={e => setSettings({ ...settings, comboSaleText: e.target.value })}/></label>
-            <label>Meta Pixel ID<input value={settings.metaPixelId || ''} onChange={e => setSettings({ ...settings, metaPixelId: e.target.value })}/></label>
+            <label>Meta Pixel / Dataset ID<input inputMode='numeric' pattern='[0-9]*' placeholder='Paste your numeric Meta Pixel ID' value={settings.metaPixelId || ''} onChange={e => setSettings({ ...settings, metaPixelId: e.target.value.replace(/\D/g, '') })}/></label><p className='adminHint'>Create a Web dataset in Meta Events Manager, copy its numeric Pixel ID here, and save. Then use Test Events to verify PageView, ViewContent, AddToCart, InitiateCheckout and Contact. WhatsApp checkout is not a confirmed Purchase.</p><a href='https://business.facebook.com/events_manager2' target='_blank' rel='noopener noreferrer'>Open Meta Events Manager</a>
             <button className='adminPrimary' disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</button>
           </form>
         )}
