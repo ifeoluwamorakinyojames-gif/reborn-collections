@@ -157,6 +157,8 @@ function App() {
   const [menBrand, setMenBrand] = useState('All');
   const [menSize, setMenSize] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
+  const [shopSubcategory, setShopSubcategory] = useState('All');
+  const [sortOrder, setSortOrder] = useState('featured');
   const [cartOpen, setCartOpen] = useState(false);
   const [newArrivalIndex, setNewArrivalIndex] = useState(0);
   const [comboSaleOnly, setComboSaleOnly] = useState(location.hash === '#promo/combo-sales');
@@ -238,17 +240,23 @@ function App() {
   }, []);
 
   const menProducts = products.filter((p) => p.category === 'Men');
+  const categoryProducts = category === 'All' ? products : products.filter((p) => p.category === category);
+  const subcategories = Array.from(new Set(categoryProducts.map((p) => p.subcategory).filter((v): v is string => Boolean(v)))).sort();
+  useEffect(() => { setShopSubcategory('All'); }, [category]);
   const menBrands = Array.from(new Set(menProducts.map((p) => p.brand || 'REBORN'))).sort();
   const list = useMemo(() => {
     if (comboSaleOnly) return products.filter((p) => p.badge === 'Combo Sale');
-    if (category !== 'Men') return category === 'All' ? products : products.filter((p) => p.category === category);
+    if (category !== 'Men') {
+      const filtered = (category === 'All' ? products : products.filter((p) => p.category === category)).filter((p) => shopSubcategory === 'All' || p.subcategory === shopSubcategory);
+      return sortOrder === 'price-low' ? [...filtered].sort((a, b) => effectivePrice(a) - effectivePrice(b)) : sortOrder === 'price-high' ? [...filtered].sort((a, b) => effectivePrice(b) - effectivePrice(a)) : filtered;
+    }
     return menProducts.filter(
       (p) =>
         (menTab === 'All Men' || p.subcategory === menTab) &&
         (menBrand === 'All' || (p.brand || 'REBORN') === menBrand) &&
         (menSize === 'All' || (p.sizes || []).includes(menSize)),
     );
-  }, [products, category, menTab, menBrand, menSize, comboSaleOnly]);
+  }, [products, category, menTab, menBrand, menSize, comboSaleOnly, shopSubcategory, sortOrder]);
 
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const cartTotal = cart.reduce((sum, item) => sum + effectivePrice(item.product) * item.qty, 0);
@@ -392,6 +400,7 @@ function App() {
           ))}
         </div>
 
+        {category !== 'Men' && !comboSaleOnly && <div className='catalogueToolbar'><div className='catalogueSubcategories' aria-label='Filter by collection'><button className={shopSubcategory === 'All' ? 'active' : ''} onClick={() => setShopSubcategory('All')}>All styles</button>{subcategories.map((sub) => <button key={sub} className={shopSubcategory === sub ? 'active' : ''} onClick={() => setShopSubcategory(sub)}>{sub}</button>)}</div><label>Sort <select aria-label='Sort products' value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}><option value='featured'>Featured</option><option value='price-low'>Price: low to high</option><option value='price-high'>Price: high to low</option></select></label></div>}
         {category === 'Men' && (
           <>
             <section className='menBanner'>
@@ -462,6 +471,7 @@ function App() {
               <h2>{selected.name}</h2>
               <h3>{money(effectivePrice(selected))}</h3>
               <p>{selected.description}</p>
+              {!!selected.colors?.length && <p className='availableColors'><strong>Colours:</strong> {selected.colors.join(' · ')}</p>}
               {!!selected.sizes?.length && (
                 <label className='sizeSelect'>Size
                   <select value={selectedSize} onChange={(e) => setSelectedSize(e.target.value)}>
@@ -536,9 +546,9 @@ function ProductGrid({
           <button className='photo' onClick={() => open(p)}><img src={p.image} alt={p.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} />{p.badge && <span>{p.badge}</span>}</button>
           <div className='info'>
             <small>{p.brand || 'REBORN'} · {p.category}{p.subcategory ? ' · ' + p.subcategory : ''}</small>
-            <h3>{p.name}</h3>
-            <div><b>{money(effectivePrice(p))}</b><em>Wholesale {money(p.wholesalePrice)}</em></div>
-            <div className='sizeLine'>{(p.sizes || []).slice(0, 6).map((s) => <span key={s}>{s}</span>)}</div>
+            <h3><a href={'/product/' + encodeURIComponent(p.id)}>{p.name}</a></h3>
+            <div><b>{money(effectivePrice(p))}</b>{p.wholesalePrice > 0 && <em>Wholesale {money(p.wholesalePrice)}</em>}</div>
+            <div className='sizeLine'>{(p.sizes || []).slice(0, 6).map((s) => <span key={s}>{s}</span>)}{(p.colors || []).slice(0, 3).map((c) => <span key={c}>{c}</span>)}</div>
             <div className='cardActions'>
               <button onClick={() => open(p)}>View</button>
               <button onClick={() => add(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button>
