@@ -291,7 +291,7 @@ function App() {
       'Account number: 5107360858',
       'Amount to transfer: ' + money(total),
       '',
-      'Please transfer the exact amount and send your payment receipt in this WhatsApp chat together with your name, phone number and delivery address.',
+      'Please confirm product availability, delivery cost and final order total with REBORN on WhatsApp before making any payment. Share a receipt only after payment is confirmed.',
     ].join('\n');
   }
 
