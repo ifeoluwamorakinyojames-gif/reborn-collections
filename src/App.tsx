@@ -363,7 +363,7 @@ function App() {
               <div><small>{settings.comboSaleEyebrow}</small><h2>{settings.comboSaleTitle}</h2><p>{settings.comboSaleText}</p></div>
               <div className='newArrivalActions'><button onClick={() => { location.hash = '#promo/combo-sales'; setComboSaleOnly(true); }}>Shop Combo Sales</button></div>
             </div>
-            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><img src={p.image} alt={p.name} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3>{p.name}</h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
+            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><img src={p.image} alt={p.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3>{p.name}</h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
           </section>
         )}
         {newArrivals.length > 0 && !comboSaleOnly && (
@@ -379,7 +379,7 @@ function App() {
               const item = newArrivals[newArrivalIndex % newArrivals.length];
               return (
                 <div className='newArrivalSlide'>
-                  <button className='newArrivalImage' onClick={() => openProduct(item)}><img src={item.image} alt={item.name} /><span>NEW ARRIVAL</span></button>
+                  <button className='newArrivalImage' onClick={() => openProduct(item)}><img src={item.image} alt={item.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} /><span>NEW ARRIVAL</span></button>
                   <div className='newArrivalCopy'>
                     <small>{item.brand || 'REBORN'} · {item.category}</small>
                     <h3>{item.name}</h3>
@@ -461,7 +461,7 @@ function App() {
           <div className='productModal' onClick={(e) => e.stopPropagation()}>
             <button className='close' onClick={() => setSelected(null)}><X /></button>
             <div className='gallery'>
-              <img src={selected.image} alt={selected.name} />
+              <img src={selected.image} alt={selected.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} />
               {selected.images && selected.images.length > 1 && (
                 <div>{selected.images.map((img, n) => <img key={img + n} src={img} alt={selected.name + ' ' + (n + 1)} />)}</div>
               )}
@@ -501,7 +501,7 @@ function App() {
                 <div className='cartLines'>
                   {cart.map((item, index) => (
                     <div className='cartLine' key={item.product.id + (item.size || '')}>
-                      <img src={item.product.image} alt={item.product.name} />
+                      <img src={item.product.image} alt={item.product.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} />
                       <div><b>{item.product.name}</b>{item.size && <small>Size: {item.size}</small>}<span>{money(effectivePrice(item.product))}</span></div>
                       <div className='qty'>
                         <button onClick={() => updateQty(index, item.qty - 1)}><Minus size={14} /></button>
@@ -542,7 +542,7 @@ function ProductGrid({
     <div className='grid'>
       {list.map((p) => (
         <article key={p.id}>
-          <button className='photo' onClick={() => open(p)}><img src={p.image} alt={p.name} />{p.badge && <span>{p.badge}</span>}</button>
+          <button className='photo' onClick={() => open(p)}><img src={p.image} alt={p.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} />{p.badge && <span>{p.badge}</span>}</button>
           <div className='info'>
             <small>{p.brand || 'REBORN'} · {p.category}{p.subcategory ? ' · ' + p.subcategory : ''}</small>
             <h3>{p.name}</h3>
