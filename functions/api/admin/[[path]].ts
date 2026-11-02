@@ -171,6 +171,15 @@ export async function onRequest(context: PagesContext) {
   const path = routePath(params);
   const method = request.method.toUpperCase();
 
+  // Reject cross-site browser requests before handling login or admin mutations.
+  // SameSite cookies are defense in depth, not a substitute for origin validation.
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    const origin = request.headers.get('origin');
+    if (origin && origin !== new URL(request.url).origin) {
+      return json({ error: 'Cross-origin admin requests are not allowed.' }, 403);
+    }
+  }
+
   if (!env.SANITY_WRITE_TOKEN || !env.ADMIN_PASSWORD || !env.ADMIN_SESSION_SECRET) {
     return json({ error: 'Admin server secrets are not configured.' }, 500);
   }
