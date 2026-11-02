@@ -93,6 +93,11 @@ const collectionSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-')
 function metaTrack(event: string, data?: Record<string, unknown>) {
   const fbq = (window as any).fbq;
   if (typeof fbq === 'function') fbq('track', event, data || {});
+  const gtag = (window as any).gtag;
+  if (typeof gtag === 'function') {
+    const eventName: Record<string, string> = { PageView: 'page_view', ViewContent: 'view_item', AddToCart: 'add_to_cart', InitiateCheckout: 'begin_checkout', Contact: 'contact' };
+    gtag('event', eventName[event] || event.toLowerCase(), { ...(data || {}), currency: 'NGN' });
+  }
 }
 
 function initMetaPixel(pixelId: string) {
@@ -147,6 +152,7 @@ function App() {
   const [selectedSize, setSelectedSize] = useState('');
   const [menu, setMenu] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [catalogueError, setCatalogueError] = useState(false);
   const [menTab, setMenTab] = useState(initialCollection.subcategory || 'All Men');
   const [menBrand, setMenBrand] = useState('All');
   const [menSize, setMenSize] = useState('All');
@@ -216,8 +222,10 @@ function App() {
       const data = await getSiteData();
       setSettings({ ...defaults, ...data.settings });
       setProducts(data.products || []);
+      setCatalogueError(false);
     } catch (e) {
       console.error('Could not load Sanity content', e);
+      setCatalogueError(true);
     } finally {
       setLoading(false);
     }
@@ -225,7 +233,7 @@ function App() {
 
   useEffect(() => {
     load();
-    const timer = setInterval(load, 15000);
+    const timer = setInterval(() => { if (!document.hidden) void load(); }, 60000);
     return () => clearInterval(timer);
   }, []);
 
@@ -288,7 +296,7 @@ function App() {
       'Account number: 5107360858',
       'Amount to transfer: ' + money(total),
       '',
-      'Please transfer the exact amount and send your payment receipt in this WhatsApp chat together with your name, phone number and delivery address.',
+      'Please confirm product availability, delivery cost and final order total with REBORN on WhatsApp before making any payment. Share a receipt only after payment is confirmed.',
     ].join('\n');
   }
 
@@ -320,6 +328,7 @@ function App() {
   return (
     <div className='site'>
       <header>
+        <div className='announcementBar'>THE REBORN EDIT · FASHION FOR EVERY OCCASION <span>WHOLESALE & RETAIL · WARRI, NIGERIA</span></div>
         <nav>
           <a href='#top' className='brand'>
             {settings.logoUrl ? <img src={settings.logoUrl} alt='REBORN logo' /> : settings.brand}
@@ -357,13 +366,15 @@ function App() {
       </header>
 
       <main id='shop'>
+        {category === 'All' && !comboSaleOnly && <section className='editorialIntro' aria-label='Explore fashion collections'><div><small>THE REBORN EDIT</small><h2>Find your next favourite look.</h2><p>Thoughtfully curated fashion, wigs, footwear and accessories for everyday style and special moments.</p></div><div className='editorialCategories'>{['Women','Men','Kids','Wigs','Shoes','Accessories'].map((c) => <button key={c} onClick={() => { location.hash = '#collection/' + collectionSlug(c); setCategory(c); }}><span>{c}</span><span aria-hidden='true'>↗</span></button>)}</div></section>}
+
         {comboSales.length > 0 && !comboSaleOnly && (
           <section className='newArrivalShowcase' aria-label='Combo sales promotion'>
             <div className='newArrivalTop'>
               <div><small>{settings.comboSaleEyebrow}</small><h2>{settings.comboSaleTitle}</h2><p>{settings.comboSaleText}</p></div>
               <div className='newArrivalActions'><button onClick={() => { location.hash = '#promo/combo-sales'; setComboSaleOnly(true); }}>Shop Combo Sales</button></div>
             </div>
-            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><img src={p.image} alt={p.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3>{p.name}</h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
+            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><img src={p.image} alt={p.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3><a href={'/product/' + encodeURIComponent(p.id)}>{p.name}</a></h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
           </section>
         )}
         {newArrivals.length > 0 && !comboSaleOnly && (
@@ -398,9 +409,9 @@ function App() {
         )}
         <div className='shopHead'>
           <div>
-            <small>LIVE FROM ADMIN</small>
-            <h2>{comboSaleOnly ? settings.comboSaleTitle : category === 'All' ? 'Current products' : collectionCopy[category]?.title || category + ' Collection'}</h2>
-            <p>{comboSaleOnly ? settings.comboSaleText : category === 'All' ? 'Everything shown here is loaded from the backend database.' : collectionCopy[category]?.text}</p>
+            <small>DISCOVER THE COLLECTION</small>
+            <h2>{comboSaleOnly ? settings.comboSaleTitle : category === 'All' ? 'Shop the latest edit' : collectionCopy[category]?.title || category + ' Collection'}</h2>
+            <p>{comboSaleOnly ? settings.comboSaleText : category === 'All' ? 'Explore the newest pieces in our fashion collection. Confirm stock and sizing before ordering.' : collectionCopy[category]?.text}</p>
           </div>
           <button onClick={load}><RefreshCw size={17} /> Refresh</button>
         </div>
@@ -453,6 +464,16 @@ function App() {
         {category !== 'Men' && <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} />}
       </main>
 
+      <section aria-labelledby='shopping-help-title' style={{maxWidth:1100,margin:'2rem auto',padding:'1.5rem'}}>
+        <h2 id='shopping-help-title'>Shopping with REBORN Collections — frequently asked questions</h2>
+        <p>Explore clothing for women, men and kids, wigs, shoes, perfumes and accessories at REBORN Collections. Contact our team to confirm current availability before ordering.</p>
+        <details><summary>Where is REBORN Collections based?</summary><p>REBORN Collections is based in Warri, Delta State, Nigeria. Contact us to confirm pickup and delivery arrangements.</p></details>
+        <details><summary>Can I order clothing, wigs, shoes and accessories on WhatsApp?</summary><p>Yes. Select an item and use the Buy on WhatsApp option to contact the REBORN team. Please confirm the selected size, current availability and final total before payment.</p></details>
+        <details><summary>Does REBORN Collections offer retail and wholesale fashion?</summary><p>REBORN Collections presents retail and wholesale fashion options. Contact the team to confirm quantity requirements, current prices and stock for your order.</p></details>
+        <details><summary>How can I confirm my clothing size?</summary><p>Check the sizes listed on the product and ask the REBORN team for item-specific measurements before ordering. Available sizes vary by product.</p></details>
+        <details><summary>Does REBORN Collections deliver across Nigeria?</summary><p>Delivery destinations, fees and timing must be confirmed with the REBORN team before payment. Do not assume a delivery option is available until confirmed.</p></details>
+      </section>
+      {catalogueError && <div role='alert' className='empty'>The latest products could not be refreshed. Please check your connection and try again. <button onClick={() => void load()}>Retry</button></div>}
       <footer><b>{settings.brand}</b><span>{settings.tagline}</span><a onClick={() => metaTrack('Contact', { content_name: 'Footer WhatsApp' })} href={'https://wa.me/' + phoneNumber(settings.whatsapp)}>WhatsApp</a></footer>
       <a className='float' onClick={() => metaTrack('Contact', { content_name: 'Floating WhatsApp chat' })} href={'https://wa.me/' + phoneNumber(settings.whatsapp)}><MessageCircle /> Chat</a>
 
