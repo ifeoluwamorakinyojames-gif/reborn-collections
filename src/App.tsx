@@ -147,6 +147,7 @@ function App() {
   const [selectedSize, setSelectedSize] = useState('');
   const [menu, setMenu] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [catalogueError, setCatalogueError] = useState(false);
   const [menTab, setMenTab] = useState(initialCollection.subcategory || 'All Men');
   const [menBrand, setMenBrand] = useState('All');
   const [menSize, setMenSize] = useState('All');
@@ -216,8 +217,10 @@ function App() {
       const data = await getSiteData();
       setSettings({ ...defaults, ...data.settings });
       setProducts(data.products || []);
+      setCatalogueError(false);
     } catch (e) {
       console.error('Could not load Sanity content', e);
+      setCatalogueError(true);
     } finally {
       setLoading(false);
     }
@@ -225,7 +228,7 @@ function App() {
 
   useEffect(() => {
     load();
-    const timer = setInterval(load, 15000);
+    const timer = setInterval(() => { if (!document.hidden) void load(); }, 60000);
     return () => clearInterval(timer);
   }, []);
 
@@ -453,6 +456,7 @@ function App() {
         {category !== 'Men' && <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} />}
       </main>
 
+      {catalogueError && <div role='alert' className='empty'>The latest products could not be refreshed. Please check your connection and try again. <button onClick={() => void load()}>Retry</button></div>}
       <footer><b>{settings.brand}</b><span>{settings.tagline}</span><a onClick={() => metaTrack('Contact', { content_name: 'Footer WhatsApp' })} href={'https://wa.me/' + phoneNumber(settings.whatsapp)}>WhatsApp</a></footer>
       <a className='float' onClick={() => metaTrack('Contact', { content_name: 'Floating WhatsApp chat' })} href={'https://wa.me/' + phoneNumber(settings.whatsapp)}><MessageCircle /> Chat</a>
 
