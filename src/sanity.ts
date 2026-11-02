@@ -7,7 +7,7 @@ export const sanity = createClient({
   projectId,
   dataset,
   apiVersion: '2026-09-29',
-  useCdn: false,
+  useCdn: true,
 });
 
 type SanityImage = {
@@ -92,7 +92,7 @@ export async function getSiteData() {
   };
 
   const products = (data.products || []).map((p) => {
-    const urls = (p.images || []).map((img) => img.asset?.url || '').filter(Boolean);
+    const urls = (p.images || []).map((img) => img?.asset?.url || '').filter((url): url is string => Boolean(url));
     return {
       id: p._id,
       name: p.name || '',
@@ -107,7 +107,7 @@ export async function getSiteData() {
       salePrice: p.salePrice ? Number(p.salePrice) : undefined,
       sizes: p.sizes || [],
       colors: p.colors || [],
-      image: urls[0] || '',
+      image: urls[0] || '/reborn-logo.svg',
       images: urls,
     };
   });
