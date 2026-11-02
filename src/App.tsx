@@ -144,15 +144,21 @@ const collectionCopy: Record<string, { title: string; text: string }> = {
 };
 
 function App() {
-  const [settings, setSettings] = useState(defaults);
+  const [settings, setSettings] = useState<Settings>(() => {
+    try { const cache = JSON.parse(sessionStorage.getItem('reborn-catalogue-v2') || 'null'); return cache?.savedAt > Date.now() - 300000 ? { ...defaults, ...cache.settings } : defaults; } catch { return defaults; }
+  });
   const [adminMode, setAdminMode] = useState(location.hash === '#admin');
   const initialCollection = parseCollectionHash();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    try { const cache = JSON.parse(sessionStorage.getItem('reborn-catalogue-v2') || 'null'); return cache?.savedAt > Date.now() - 300000 && Array.isArray(cache.products) ? cache.products : []; } catch { return []; }
+  });
   const [category, setCategory] = useState(initialCollection.category);
   const [selected, setSelected] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState('');
   const [menu, setMenu] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try { return !sessionStorage.getItem('reborn-catalogue-v2'); } catch { return true; }
+  });
   const [catalogueError, setCatalogueError] = useState(false);
   const [menTab, setMenTab] = useState(initialCollection.subcategory || 'All Men');
   const [menBrand, setMenBrand] = useState('All');
@@ -217,6 +223,7 @@ function App() {
       const data = await getSiteData();
       setSettings({ ...defaults, ...data.settings });
       setProducts(data.products || []);
+      try { sessionStorage.setItem('reborn-catalogue-v2', JSON.stringify({ savedAt: Date.now(), settings: data.settings, products: data.products || [] })); } catch { /* Storage unavailable or full; live data still works. */ }
       setCatalogueError(false);
     } catch (e) {
       console.error('Could not load Sanity content', e);
@@ -377,7 +384,7 @@ function App() {
               <div><small>{settings.comboSaleEyebrow}</small><h2>{settings.comboSaleTitle}</h2><p>{settings.comboSaleText}</p></div>
               <div className='newArrivalActions'><button onClick={() => { location.hash = '#promo/combo-sales'; setComboSaleOnly(true); }}>Shop Combo Sales</button></div>
             </div>
-            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><img src={p.image} alt={p.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3><a href={'/product/' + encodeURIComponent(p.id)}>{p.name}</a></h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
+            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><img src={p.image} alt={p.name} loading="lazy" decoding="async" width="640" height="800" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3><a href={'/product/' + encodeURIComponent(p.id)}>{p.name}</a></h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
           </section>
         )}
         <div className='shopHead'>
@@ -532,11 +539,13 @@ function ProductGrid({
   open: (p: Product) => void;
   add: (p: Product, size?: string) => void;
 }) {
+  const [visibleCount, setVisibleCount] = useState(20);
+  useEffect(() => { setVisibleCount(20); }, [list]);
   if (loading) return <div className='empty'>Loading…</div>;
   if (!list.length) return <div className='empty'><Package /><b>No products match these filters</b><p>Try another brand, size or collection.</p></div>;
   return (
-    <div className='grid'>
-      {list.map((p) => (
+    <div className='catalogueResults'><div className='grid'>
+      {list.slice(0, visibleCount).map((p) => (
         <article key={p.id}>
           <button className='photo' onClick={() => open(p)}><img src={p.image} alt={p.name} loading="lazy" decoding="async" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} />{p.badge && <span>{p.badge}</span>}</button>
           <div className='info'>
@@ -551,7 +560,7 @@ function ProductGrid({
           </div>
         </article>
       ))}
-    </div>
+    </div>{visibleCount < list.length && <div className='loadMoreWrap'><p>Showing {Math.min(visibleCount, list.length)} of {list.length} products</p><button onClick={() => setVisibleCount((n) => n + 20)}>Load more products</button></div>}</div>
   );
 }
 
