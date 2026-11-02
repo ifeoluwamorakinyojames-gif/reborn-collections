@@ -456,6 +456,15 @@ function App() {
         {category !== 'Men' && <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} />}
       </main>
 
+      <section aria-labelledby='shopping-help-title' style={{maxWidth:1100,margin:'2rem auto',padding:'1.5rem'}}>
+        <h2 id='shopping-help-title'>Shopping with REBORN Collections — frequently asked questions</h2>
+        <p>Explore clothing for women, men and kids, wigs, shoes, perfumes and accessories at REBORN Collections. Contact our team to confirm current availability before ordering.</p>
+        <details><summary>Where is REBORN Collections based?</summary><p>REBORN Collections is based in Warri, Delta State, Nigeria. Contact us to confirm pickup and delivery arrangements.</p></details>
+        <details><summary>Can I order clothing, wigs, shoes and accessories on WhatsApp?</summary><p>Yes. Select an item and use the Buy on WhatsApp option to contact the REBORN team. Please confirm the selected size, current availability and final total before payment.</p></details>
+        <details><summary>Does REBORN Collections offer retail and wholesale fashion?</summary><p>REBORN Collections presents retail and wholesale fashion options. Contact the team to confirm quantity requirements, current prices and stock for your order.</p></details>
+        <details><summary>How can I confirm my clothing size?</summary><p>Check the sizes listed on the product and ask the REBORN team for item-specific measurements before ordering. Available sizes vary by product.</p></details>
+        <details><summary>Does REBORN Collections deliver across Nigeria?</summary><p>Delivery destinations, fees and timing must be confirmed with the REBORN team before payment. Do not assume a delivery option is available until confirmed.</p></details>
+      </section>
       {catalogueError && <div role='alert' className='empty'>The latest products could not be refreshed. Please check your connection and try again. <button onClick={() => void load()}>Retry</button></div>}
       <footer><b>{settings.brand}</b><span>{settings.tagline}</span><a onClick={() => metaTrack('Contact', { content_name: 'Footer WhatsApp' })} href={'https://wa.me/' + phoneNumber(settings.whatsapp)}>WhatsApp</a></footer>
       <a className='float' onClick={() => metaTrack('Contact', { content_name: 'Floating WhatsApp chat' })} href={'https://wa.me/' + phoneNumber(settings.whatsapp)}><MessageCircle /> Chat</a>
