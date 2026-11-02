@@ -11,6 +11,8 @@ import {
   RefreshCw,
   ShoppingBag,
   ShoppingCart,
+  Share2,
+  Copy,
   X,
 } from 'lucide-react';
 
@@ -261,6 +263,18 @@ function App() {
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const cartTotal = cart.reduce((sum, item) => sum + effectivePrice(item.product) * item.qty, 0);
 
+  const productLink = (p: Product) => 'https://reborncollections.com/product/' + encodeURIComponent(p.id);
+
+  async function shareProduct(p: Product) {
+    const url = productLink(p);
+    if (navigator.share) {
+      try { await navigator.share({ title: p.name + ' | REBORN Collections', text: 'See ' + p.name + ' at REBORN Collections', url }); return; }
+      catch (error) { if ((error as Error)?.name === 'AbortError') return; }
+    }
+    try { await navigator.clipboard.writeText(url); window.alert('Product link copied! Paste it into WhatsApp, Facebook or Instagram.'); }
+    catch { window.prompt('Copy this product link:', url); }
+  }
+
   function openProduct(p: Product) {
     metaTrack('ViewContent', { content_ids: [p.id], content_name: p.name, content_category: p.category, content_type: 'product', value: effectivePrice(p), currency: 'NGN' });
     setSelected(p);
@@ -384,7 +398,7 @@ function App() {
               <div><small>{settings.comboSaleEyebrow}</small><h2>{settings.comboSaleTitle}</h2><p>{settings.comboSaleText}</p></div>
               <div className='newArrivalActions'><button onClick={() => { location.hash = '#promo/combo-sales'; setComboSaleOnly(true); }}>Shop Combo Sales</button></div>
             </div>
-            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><img src={p.image} alt={p.name} loading="lazy" decoding="async" width="640" height="800" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3><a href={'/product/' + encodeURIComponent(p.id)}>{p.name}</a></h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
+            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><img src={p.image} alt={p.name} loading="lazy" decoding="async" width="640" height="800" onError={(event) => { const img = event.currentTarget; img.onerror = null; img.src = '/reborn-logo.svg'; }} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3><a href={'/product/' + encodeURIComponent(p.id)}>{p.name}</a></h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button onClick={() => shareProduct(p)}><Share2 size={15} /> Share</button><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
           </section>
         )}
         <div className='shopHead'>
@@ -438,11 +452,11 @@ function App() {
                   ))}
                 </div>
               </aside>
-              <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} />
+              <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} shareProduct={shareProduct} />
             </div>
           </>
         )}
-        {category !== 'Men' && <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} />}
+        {category !== 'Men' && <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} shareProduct={shareProduct} />}
       </main>
 
       <section aria-labelledby='shopping-help-title' style={{maxWidth:1100,margin:'2rem auto',padding:'1.5rem'}}>
@@ -482,6 +496,8 @@ function App() {
                 </label>
               )}
               <div className='productActions'>
+                <button onClick={() => shareProduct(selected)}><Share2 size={18} /> Share product</button>
+                <button onClick={() => { const url = productLink(selected); navigator.clipboard?.writeText(url).then(() => window.alert('Product link copied!')).catch(() => window.prompt('Copy product link:', url)); }}><Copy size={18} /> Copy link</button>
                 <button className='addCart' onClick={() => addToCart(selected, selectedSize || undefined)}><ShoppingCart size={18} /> Add to cart</button>
                 <button className='whatsappButton' onClick={() => singleWhatsAppCheckout(selected, selectedSize || undefined)}><MessageCircle size={18} /> Buy on WhatsApp</button>
                 <a onClick={() => metaTrack('Contact', { content_ids: [selected.id], content_name: selected.name, content_category: selected.category })} href={'https://wa.me/' + phoneNumber(settings.whatsapp) + '?text=' + encodeURIComponent('Hello REBORN, is ' + selected.name + (selectedSize ? ' in size ' + selectedSize : '') + ' available?')}>
@@ -533,11 +549,13 @@ function ProductGrid({
   loading,
   open,
   add,
+  shareProduct,
 }: {
   list: Product[];
   loading: boolean;
   open: (p: Product) => void;
   add: (p: Product, size?: string) => void;
+  shareProduct: (p: Product) => void;
 }) {
   const [visibleCount, setVisibleCount] = useState(20);
   useEffect(() => { setVisibleCount(20); }, [list]);
@@ -554,7 +572,7 @@ function ProductGrid({
             <div><b>{money(effectivePrice(p))}</b>{p.wholesalePrice > 0 && <em>Wholesale {money(p.wholesalePrice)}</em>}</div>
             <div className='sizeLine'>{(p.sizes || []).slice(0, 6).map((s) => <span key={s}>{s}</span>)}{(p.colors || []).slice(0, 3).map((c) => <span key={c}>{c}</span>)}</div>
             <div className='cardActions'>
-              <button onClick={() => open(p)}>View</button>
+              <button onClick={() => open(p)}>View</button><button onClick={() => shareProduct(p)}><Share2 size={15} /> Share</button>
               <button onClick={() => add(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button>
             </div>
           </div>
