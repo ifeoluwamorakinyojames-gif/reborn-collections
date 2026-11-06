@@ -275,6 +275,34 @@ function App() {
     catch { window.prompt('Copy this product link:', url); }
   }
 
+  async function shareProductPhoto(p: Product) {
+    const url = productLink(p);
+    const photo = p.images?.[0] || p.image;
+    try {
+      if (!photo || !photo.startsWith('https://cdn.sanity.io/')) throw new Error('No product photo available');
+      const imageUrl = new URL(photo);
+      imageUrl.searchParams.delete('auto');
+      imageUrl.searchParams.set('fm', 'jpg');
+      imageUrl.searchParams.set('w', '1080');
+      imageUrl.searchParams.set('q', '85');
+      const response = await fetch(imageUrl.toString());
+      if (!response.ok) throw new Error('Image could not be loaded');
+      const blob = await response.blob();
+      const file = new File([blob], 'reborn-product-' + p.id.replace(/[^a-z0-9_-]/gi, '-') + '.jpg', { type: 'image/jpeg' });
+      const data = { files: [file], title: p.name, text: p.name + ' — REBORN Collections\\n' + url };
+      if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+        await navigator.share(data);
+        return;
+      }
+      window.alert('Photo sharing is not supported on this browser. The product link will be copied instead.');
+      await shareProduct(p);
+    } catch (error) {
+      if ((error as Error)?.name === 'AbortError') return;
+      window.alert('Unable to share the product photo. You can still share its link.');
+      await shareProduct(p);
+    }
+  }
+
   function openProduct(p: Product) {
     metaTrack('ViewContent', { content_ids: [p.id], content_name: p.name, content_category: p.category, content_type: 'product', value: effectivePrice(p), currency: 'NGN' });
     setSelected(p);
@@ -496,7 +524,7 @@ function App() {
                 </label>
               )}
               <div className='productActions'>
-                <button onClick={() => shareProduct(selected)}><Share2 size={18} /> Share product</button>
+                <button onClick={() => shareProduct(selected)}><Share2 size={18} /> Share link</button><button onClick={() => shareProductPhoto(selected)}><Share2 size={18} /> Share photo + link</button>
                 <button onClick={() => { const url = productLink(selected); navigator.clipboard?.writeText(url).then(() => window.alert('Product link copied!')).catch(() => window.prompt('Copy product link:', url)); }}><Copy size={18} /> Copy link</button>
                 <button className='addCart' onClick={() => addToCart(selected, selectedSize || undefined)}><ShoppingCart size={18} /> Add to cart</button>
                 <button className='whatsappButton' onClick={() => singleWhatsAppCheckout(selected, selectedSize || undefined)}><MessageCircle size={18} /> Buy on WhatsApp</button>
