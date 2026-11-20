@@ -90,7 +90,7 @@ const phoneNumber = (v: string) => v.replace(/\D/g, '').replace(/^0/, '234');
 const effectivePrice = (p: Product) => (p.salePrice && p.salePrice < p.price ? p.salePrice : p.price);
 const collectionSlug = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
 const productSlug = (name: string) => name.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-const productUrl = (product: Product) => '/products/' + productSlug(product.name);
+const productUrl = (product: Product) => '/products/' + productSlug(product.name) + '-' + product.id.slice(-6).toLowerCase();
 
 function metaTrack(event: string, data?: Record<string, unknown>) {
   const fbq = (window as any).fbq;
