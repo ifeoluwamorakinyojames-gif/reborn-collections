@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ImagePlus, KeyRound, LogOut, PackagePlus, RefreshCw, Save, Trash2, UploadCloud, UserPlus } from 'lucide-react';
+import { ArrowLeft, ImagePlus, KeyRound, LogOut, PackagePlus, Pencil, RefreshCw, Save, Trash2, UploadCloud, UserPlus, X } from 'lucide-react';
 import './admin.css';
 
 type AdminProduct = {
@@ -102,6 +102,7 @@ export default function AdminPanel() {
   const [settings, setSettings] = useState<AdminSettings>({});
   const [draft, setDraft] = useState<ProductDraft>(emptyDraft);
   const [singleImages, setSingleImages] = useState<File[]>([]);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [bulkImages, setBulkImages] = useState<File[]>([]);
   const [bulkBaseName, setBulkBaseName] = useState('Men Jeans');
   const [tab, setTab] = useState<'products' | 'bulk' | 'settings' | 'access'>('products');
@@ -213,6 +214,56 @@ export default function AdminPanel() {
     finally { setBusy(false); }
   }
 
+  function startEdit(product: AdminProduct) {
+    setEditingProductId(product._id);
+    setDraft({
+      name: product.name || '',
+      category: product.category || 'Women',
+      subcategory: product.subcategory || '',
+      brand: product.brand || 'REBORN',
+      price: String(product.price ?? ''),
+      wholesalePrice: String(product.wholesalePrice ?? ''),
+      salePrice: String(product.salePrice ?? ''),
+      description: product.description || '',
+      badge: product.badge || '',
+      sizes: (product.sizes || []).join(', '),
+      colors: (product.colors || []).join(', '),
+      inStock: product.inStock !== false,
+    });
+    setSingleImages([]);
+    setError('');
+    setMessage(`Editing ${product.name}`);
+    setTab('products');
+  }
+
+  function cancelEdit() {
+    setEditingProductId(null);
+    setDraft(emptyDraft);
+    setSingleImages([]);
+    setError('');
+    setMessage('');
+  }
+
+  async function updateProduct(e: FormEvent) {
+    e.preventDefault();
+    if (!editingProductId) return;
+    if (!draft.name.trim()) return setError('Enter a product name.');
+    setBusy(true); setError(''); setMessage(singleImages.length ? 'Uploading replacement images…' : 'Saving product changes…');
+    try {
+      const refs = singleImages.length ? await uploadFiles(singleImages) : [];
+      await api('products/' + encodeURIComponent(editingProductId), {
+        method: 'PUT',
+        body: JSON.stringify({ product: productPayload(draft.name.trim(), refs) }),
+      });
+      setMessage('Product updated in Sanity successfully.');
+      setEditingProductId(null);
+      setDraft(emptyDraft);
+      setSingleImages([]);
+      await loadAll();
+    } catch (e: any) { setError(e.message); setMessage(''); }
+    finally { setBusy(false); }
+  }
+
   async function createBulk(e: FormEvent) {
     e.preventDefault();
     if (!bulkImages.length) return setError('Choose the product images for the batch.');
@@ -296,8 +347,11 @@ export default function AdminPanel() {
 
         {tab === 'products' && (
           <div className='adminColumns'>
-            <form className='adminCard adminForm' onSubmit={createProduct}>
-              <h2>Add a product</h2>
+            <form className='adminCard adminForm' onSubmit={editingProductId ? updateProduct : createProduct}>
+              <div className='adminFormHeading'>
+                <h2>{editingProductId ? 'Edit existing product' : 'Add a product'}</h2>
+                {editingProductId && <button type='button' className='adminTextButton' onClick={cancelEdit}><X size={16}/> Cancel edit</button>}
+              </div>
               <label>Product name<input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></label>
               <div className='adminRow'>
                 <label>Category<select value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })}>{categories.map(c => <option key={c}>{c}</option>)}</select></label>
@@ -316,8 +370,11 @@ export default function AdminPanel() {
               <label>Sizes <small>Separate with commas</small><input value={draft.sizes} onChange={(e) => setDraft({ ...draft, sizes: e.target.value })} placeholder='S, M, L, XL' /></label>
               <label>Colours <small>Separate with commas</small><input value={draft.colors} onChange={(e) => setDraft({ ...draft, colors: e.target.value })} placeholder='Black, Blue, Orange' /></label>
               <label className='adminCheck'><input type='checkbox' checked={draft.inStock} onChange={(e) => setDraft({ ...draft, inStock: e.target.checked })} /> In stock</label>
-              <label className='adminUpload'><ImagePlus/> Product images<input type='file' accept='image/*' multiple onChange={(e) => setSingleImages(Array.from(e.target.files || []))} /><span>{singleImages.length ? `${singleImages.length} image(s) selected` : 'Choose up to 15 images'}</span></label>
-              <button className='adminPrimary' disabled={busy}>{busy ? 'Working…' : 'Publish product'}</button>
+              <label className='adminUpload'><ImagePlus/> {editingProductId ? 'Replace product images (optional)' : 'Product images'}<input type='file' accept='image/*' multiple onChange={(e) => setSingleImages(Array.from(e.target.files || []))} /><span>{singleImages.length ? `${singleImages.length} replacement image(s) selected` : editingProductId ? 'Leave empty to keep the current images' : 'Choose up to 15 images'}</span></label>
+              {editingProductId && products.find((p) => p._id === editingProductId)?.images?.length ? (
+                <div className='adminCurrentImages'><small>Current product images</small><div>{products.find((p) => p._id === editingProductId)?.images?.map((image, index) => image.asset?.url ? <img key={image.asset._ref || index} src={image.asset.url} alt={`Current product image ${index + 1}`} /> : null)}</div></div>
+              ) : null}
+              <button className='adminPrimary' disabled={busy}>{busy ? 'Working…' : editingProductId ? 'Save product changes' : 'Publish product'}</button>
             </form>
 
             <section className='adminCard'>
@@ -326,7 +383,10 @@ export default function AdminPanel() {
                 {products.map((p) => <div className='adminProductItem' key={p._id}>
                   {p.images?.[0]?.asset?.url ? <img src={p.images[0].asset!.url} alt='' /> : <div className='adminThumb'/>}
                   <div><b>{p.name}</b><small>{p.category} · ₦{Number(p.price || 0).toLocaleString()}</small></div>
-                  <button title='Delete' onClick={() => deleteProduct(p._id)}><Trash2 size={17}/></button>
+                  <div className='adminProductActions'>
+                    <button type='button' title='Edit product' aria-label={`Edit ${p.name}`} onClick={() => startEdit(p)}><Pencil size={17}/></button>
+                    <button type='button' title='Delete' aria-label={`Delete ${p.name}`} onClick={() => deleteProduct(p._id)}><Trash2 size={17}/></button>
+                  </div>
                 </div>)}
                 {!products.length && <p>No products yet.</p>}
               </div>
