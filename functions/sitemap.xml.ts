@@ -1,10 +1,12 @@
 const PROJECT_ID = 'unv7o4vs';
 const DATASET = 'production';
 const API_VERSION = '2026-09-29';
-const slugify = (value: string) => value.toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const slugify = (value: string) => value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const xml = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 
-type PagesContext = { request: Request; env: Record<string, unknown>; params: Record<string, string | string[]>; };\n\nexport const onRequest = async (_context: PagesContext) => {
+type PagesContext = { request: Request; env: Record<string, unknown>; params: Record<string, string | string[]>; };
+
+export const onRequest = async (_context: PagesContext) => {
   try {
     const groq = '*[_type == "product"]{_id,name,_updatedAt}';
     const endpoint = `https://${PROJECT_ID}.api.sanity.io/v${API_VERSION}/data/query/${DATASET}?query=${encodeURIComponent(groq)}`;
