@@ -4,11 +4,11 @@ const API_VERSION = '2026-09-29';
 const slugify = (value: string) => value.toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const xml = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 
-export const onRequest: PagesFunction = async () => {
+type PagesContext = { request: Request; env: Record<string, unknown>; params: Record<string, string | string[]>; };\n\nexport const onRequest = async (_context: PagesContext) => {
   try {
     const groq = '*[_type == "product"]{name,_updatedAt}';
     const endpoint = `https://${PROJECT_ID}.api.sanity.io/v${API_VERSION}/data/query/${DATASET}?query=${encodeURIComponent(groq)}`;
-    const response = await fetch(endpoint, { headers: { Accept: 'application/json' }, cf: { cacheTtl: 300, cacheEverything: true } });
+    const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
     if (!response.ok) throw new Error('Sanity sitemap query failed');
     const payload = await response.json() as { result?: Array<{ name?: string; _updatedAt?: string }> };
     const products = (payload.result || []).filter((p) => p.name && slugify(p.name));
