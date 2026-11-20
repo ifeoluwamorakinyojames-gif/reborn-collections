@@ -275,6 +275,19 @@ export async function onRequest(context: PagesContext) {
     return json({ ok: true, count: docs.length, result });
   }
 
+  if (path.startsWith('products/') && method === 'PUT') {
+    const id = decodeURIComponent(path.slice('products/'.length));
+    if (!id || id.startsWith('drafts.')) return json({ error: 'Invalid product id.' }, 400);
+    const body = await request.json().catch(() => ({})) as any;
+    const product = cleanProduct(body.product || {});
+    if (!product.name) return json({ error: 'Product name is required.' }, 400);
+    const set: Record<string, unknown> = { ...product };
+    // Keep the current Sanity image gallery unless replacement images were uploaded.
+    if (!product.images.length) delete set.images;
+    await mutate(env, [{ patch: { id, set } }]);
+    return json({ ok: true });
+  }
+
   if (path.startsWith('products/') && method === 'DELETE') {
     const id = decodeURIComponent(path.slice('products/'.length));
     if (!id || id.startsWith('drafts.')) return json({ error: 'Invalid product id.' }, 400);
