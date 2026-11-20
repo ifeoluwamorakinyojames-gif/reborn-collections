@@ -6,7 +6,7 @@ const DATASET = 'production';
 const API_VERSION = '2026-09-29';
 const SITE = 'https://reborncollections.com';
 
-const slugify = (value: string) => value.toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const slugify = (value: string) => value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const esc = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]!));
 const money = (value: unknown) => '₦' + Number(value || 0).toLocaleString('en-NG');
 const json = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003c');
