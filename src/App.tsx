@@ -451,11 +451,11 @@ function App() {
                   ))}
                 </div>
               </aside>
-              <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} />
+              <ProductGrid list={list} loading={loading} add={addToCart} />
             </div>
           </>
         )}
-        {category !== 'Men' && <ProductGrid list={list} loading={loading} open={openProduct} add={addToCart} />}
+        {category !== 'Men' && <ProductGrid list={list} loading={loading} add={addToCart} />}
       </main>
 
       <footer><b>{settings.brand}</b><span>{settings.tagline}</span><a onClick={() => metaTrack('Contact', { content_name: 'Footer WhatsApp' })} href={'https://wa.me/' + phoneNumber(settings.whatsapp)}>WhatsApp</a></footer>
