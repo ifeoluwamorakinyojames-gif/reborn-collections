@@ -247,12 +247,6 @@ function App() {
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const cartTotal = cart.reduce((sum, item) => sum + effectivePrice(item.product) * item.qty, 0);
 
-  function openProduct(p: Product) {
-    metaTrack('ViewContent', { content_ids: [p.id], content_name: p.name, content_category: p.category, content_type: 'product', value: effectivePrice(p), currency: 'NGN' });
-    setSelected(p);
-    setSelectedSize(p.sizes?.[0] || '');
-  }
-
   function addToCart(p: Product, size?: string) {
     metaTrack('AddToCart', { content_ids: [p.id], content_name: p.name, content_category: p.category, content_type: 'product', value: effectivePrice(p), currency: 'NGN' });
     setCart((current) => {
@@ -533,12 +527,10 @@ function App() {
 function ProductGrid({
   list,
   loading,
-  open,
   add,
 }: {
   list: Product[];
   loading: boolean;
-  open: (p: Product) => void;
   add: (p: Product, size?: string) => void;
 }) {
   if (loading) return <div className='empty'>Loading…</div>;
