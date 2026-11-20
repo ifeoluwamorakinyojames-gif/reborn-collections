@@ -1,4 +1,5 @@
 type Env = { SANITY_PROJECT_ID?: string; SANITY_DATASET?: string; };
+type PagesContext = { params: Record<string, string | string[]>; env: Env; request: Request; };
 
 const PROJECT_ID = 'unv7o4vs';
 const DATASET = 'production';
@@ -10,7 +11,7 @@ const esc = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, (char) =
 const money = (value: unknown) => '₦' + Number(value || 0).toLocaleString('en-NG');
 const json = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003c');
 
-export const onRequest: PagesFunction<Env> = async ({ params, env }) => {
+export const onRequest = async ({ params, env }: PagesContext) => {
   const slug = String(params.slug || '');
   const projectId = env.SANITY_PROJECT_ID || PROJECT_ID;
   const dataset = env.SANITY_DATASET || DATASET;
@@ -18,7 +19,7 @@ export const onRequest: PagesFunction<Env> = async ({ params, env }) => {
   const endpoint = `https://${projectId}.api.sanity.io/v${API_VERSION}/data/query/${dataset}?query=${encodeURIComponent(groq)}`;
 
   try {
-    const response = await fetch(endpoint, { headers: { Accept: 'application/json' }, cf: { cacheTtl: 60, cacheEverything: true } });
+    const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
     if (!response.ok) throw new Error('Sanity product query failed');
     const payload = await response.json() as { result?: any[] };
     const products = payload.result || [];
