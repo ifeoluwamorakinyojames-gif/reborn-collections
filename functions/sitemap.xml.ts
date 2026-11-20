@@ -6,14 +6,14 @@ const xml = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;'
 
 type PagesContext = { request: Request; env: Record<string, unknown>; params: Record<string, string | string[]>; };\n\nexport const onRequest = async (_context: PagesContext) => {
   try {
-    const groq = '*[_type == "product"]{name,_updatedAt}';
+    const groq = '*[_type == "product"]{_id,name,_updatedAt}';
     const endpoint = `https://${PROJECT_ID}.api.sanity.io/v${API_VERSION}/data/query/${DATASET}?query=${encodeURIComponent(groq)}`;
     const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
     if (!response.ok) throw new Error('Sanity sitemap query failed');
     const payload = await response.json() as { result?: Array<{ _id?: string; name?: string; _updatedAt?: string }> };
     const products = (payload.result || []).filter((p) => p.name && slugify(p.name));
     const urls = products.map((product) => {
-      const loc = `https://reborncollections.com/products/${slugify(product.name || '')}-${String((product as any)._id || '').slice(-6).toLowerCase()}`;
+      const loc = `https://reborncollections.com/products/${slugify(product.name || '')}-${String(product._id || '').slice(-6).toLowerCase()}`;
       const lastmod = product._updatedAt ? `<lastmod>${xml(product._updatedAt.slice(0, 10))}</lastmod>` : '';
       return `<url><loc>${xml(loc)}</loc>${lastmod}<changefreq>weekly</changefreq><priority>0.8</priority></url>`;
     }).join('');
