@@ -23,7 +23,7 @@ export const onRequest = async ({ params, env }: PagesContext) => {
     if (!response.ok) throw new Error('Sanity product query failed');
     const payload = await response.json() as { result?: any[] };
     const products = payload.result || [];
-    const product = products.find((item) => slugify(item.name || '') === slug);
+    const product = products.find((item) => slugify(item.name || '') + '-' + String(item._id || '').slice(-6).toLowerCase() === slug);
     if (!product) return new Response('Product not found', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });
 
     const name = String(product.name || 'REBORN product');
