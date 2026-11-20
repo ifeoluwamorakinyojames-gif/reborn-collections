@@ -366,7 +366,7 @@ function App() {
               <div><small>{settings.comboSaleEyebrow}</small><h2>{settings.comboSaleTitle}</h2><p>{settings.comboSaleText}</p></div>
               <div className='newArrivalActions'><button onClick={() => { location.hash = '#promo/combo-sales'; setComboSaleOnly(true); }}>Shop Combo Sales</button></div>
             </div>
-            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><button className='photo' onClick={() => openProduct(p)}><img src={p.image} alt={p.name} /><span>COMBO SALE</span></button><div className='info'><small>{p.category}</small><h3>{p.name}</h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><button onClick={() => openProduct(p)}>View</button><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
+            <div className='grid'>{comboSales.slice(0, 4).map((p) => <article key={p.id}><a className='photo' href={productUrl(p)} aria-label={'View ' + p.name}><img src={p.image} alt={p.name} /><span>COMBO SALE</span></a><div className='info'><small>{p.category}</small><h3>{p.name}</h3><div><b>{money(effectivePrice(p))}</b><em>Promo bundle</em></div><div className='cardActions'><a className='viewProduct' href={productUrl(p)}>View</a><button onClick={() => addToCart(p, p.sizes?.[0])}><ShoppingCart size={15} /> Add</button></div></div></article>)}</div>
           </section>
         )}
         {newArrivals.length > 0 && !comboSaleOnly && (
@@ -382,14 +382,14 @@ function App() {
               const item = newArrivals[newArrivalIndex % newArrivals.length];
               return (
                 <div className='newArrivalSlide'>
-                  <button className='newArrivalImage' onClick={() => openProduct(item)}><img src={item.image} alt={item.name} /><span>NEW ARRIVAL</span></button>
+                  <a className='newArrivalImage' href={productUrl(item)} aria-label={'View ' + item.name}><img src={item.image} alt={item.name} /><span>NEW ARRIVAL</span></a>
                   <div className='newArrivalCopy'>
                     <small>{item.brand || 'REBORN'} · {item.category}</small>
                     <h3>{item.name}</h3>
                     <strong>{money(effectivePrice(item))}</strong>
                     <p>{item.description || 'A fresh REBORN arrival ready to shop now.'}</p>
                     <div className='newArrivalActions'>
-                      <button onClick={() => openProduct(item)}>View product</button>
+                      <a className='viewProduct' href={productUrl(item)}>View product</a>
                       <button onClick={() => { location.hash = '#collection/' + collectionSlug(item.category); setCategory(item.category); }}>Shop {item.category}</button>
                     </div>
                   </div>
@@ -545,7 +545,7 @@ function ProductGrid({
     <div className='grid'>
       {list.map((p) => (
         <article key={p.id}>
-          <button className='photo' onClick={() => open(p)}><img src={p.image} alt={p.name} />{p.badge && <span>{p.badge}</span>}</button>
+          <a className='photo' href={productUrl(p)} aria-label={'View ' + p.name}><img src={p.image} alt={p.name} />{p.badge && <span>{p.badge}</span>}</a>
           <div className='info'>
             <small>{p.brand || 'REBORN'} · {p.category}{p.subcategory ? ' · ' + p.subcategory : ''}</small>
             <h3>{p.name}</h3>
