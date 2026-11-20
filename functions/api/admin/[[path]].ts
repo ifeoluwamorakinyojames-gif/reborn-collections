@@ -282,9 +282,17 @@ export async function onRequest(context: PagesContext) {
     const product = cleanProduct(body.product || {});
     if (!product.name) return json({ error: 'Product name is required.' }, 400);
     const set: Record<string, unknown> = { ...product };
+    // Sanity document types are immutable; do not include _type in a patch.
+    delete set._type;
     // Keep the current Sanity image gallery unless replacement images were uploaded.
     if (!product.images.length) delete set.images;
-    await mutate(env, [{ patch: { id, set } }]);
+    // Clearing optional fields in the edit form should clear them in Sanity too.
+    const unset = [
+      ...(!body.product?.subcategory ? ['subcategory'] : []),
+      ...(!body.product?.badge ? ['badge'] : []),
+      ...(body.product?.salePrice === undefined || body.product?.salePrice === null || body.product?.salePrice === '' ? ['salePrice'] : []),
+    ];
+    await mutate(env, [{ patch: { id, set, ...(unset.length ? { unset } : {}) } }]);
     return json({ ok: true });
   }
 
